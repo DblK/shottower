@@ -1,0 +1,71 @@
+linters-settings:
+  lll:
+    line-length: 20000
+  gocyclo:
+    min-complexity: 20
+
+linters:
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - gosimple
+    - structcheck # waiting for compatibility with Go 1.18
+    - varcheck
+    - ineffassign
+    - deadcode
+    - typecheck
+    - bodyclose # waiting for compatibility with Go 1.18
+    - revive
+    - stylecheck
+    - gosec
+    - unconvert
+    - dupl
+    - goconst
+    - gocyclo
+    - gocognit
+    - gofmt
+    - goimports
+    - depguard
+    - misspell
+    - lll
+    - unparam # waiting for compatibility with Go 1.18
+    - dogsled
+    # - funlen
+    - gochecknoinits
+    # - gocritic
+    # - godox
+    - nakedret
+    - prealloc
+    - whitespace
+    # - wsl
+    - exportloopref
+    - golint
+    - gochecknoglobals
+  disable:
+    - noctx
+    - scopelint
+    - errorlint
+
+  disable-all: false
+  presets:
+    - bugs
+    - unused
+  fast: false
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests files.
+    - path: _test\.go
+      linters:
+        - gochecknoglobals
+        - dupl
+    - linters:
+        - goconst
+      text: "string `image` has"
+    - linters:
+        - goconst
+      text: "string `video` has"
+  include:
+    # - EXC0002

@@ -1,0 +1,2987 @@
+openapi: 3.0.0
+info:
+  description: "Shottowwer is the open source version of Shotstack which is a video, image and audio editing service that allows\
+    \ for the automated\ngeneration of videos, images and audio using JSON and a RESTful\
+    \ API.\n\nYou arrange and configure an edit and POST it to the API which will\
+    \ render your media and provide a file \nlocation when complete.\n\nFor more details\
+    \ visit [shottower](https://github.com/DblK/shottower) or checkout our\n[getting started](https://shotstack.io/docs/guide/)\
+    \ documentation.\n\nThere are two main API's, one for editing and generating assets\
+    \ (Edit API) and one for managing hosted assets\n(Serve API).\n\nThe Edit API\
+    \ base URL is: <b>http://0.0.0.0:4000/{version}</b>\n\nThe Serve API base\
+    \ URL is: <b>http://0.0.0.0:4000/serve/{version}</b>\n"
+  title: Shottower
+  version: stage
+servers:
+- url: "http://0.0.0.0:4000/{version}"
+  variables:
+    version:
+      default: stage
+      description: Set the stage to `v1` for production usage without watermarks.
+        Set to `stage` to use the development sandbox.
+      enum:
+      - v1
+      - stage
+- url: "http://0.0.0.0:4000/serve/{version}"
+  variables:
+    version:
+      default: stage
+      description: Set the stage to `v1` for production usage. Set to `stage` to use
+        the development sandbox.
+      enum:
+      - v1
+      - stage
+paths:
+  /render:
+    post:
+      description: "Queue and render the contents of an [Edit](#tocs_edit) as a video,\
+        \ image or audio file.\n\n**Base URL:** http://0.0.0.0:4000/{version}\n"
+      operationId: postRender
+      requestBody:
+        content:
+          application/json:
+            example:
+              $ref: ./definitions/edit.yaml
+            schema:
+              $ref: '#/components/schemas/Edit'
+        description: "The video, image or audio edit specified using JSON."
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueuedResponse'
+          description: The queued render details
+      security:
+      - DeveloperKey: []
+      summary: Render Asset
+      tags:
+      - Edit
+  /render/{id}:
+    get:
+      description: "Get the rendering status, temporary asset url and details of a\
+        \ render by ID.\n\n**Base URL:** http://0.0.0.0:4000/{version}\n"
+      operationId: getRender
+      parameters:
+      - description: The id of the timeline render task in UUID format
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+          type: string
+        style: simple
+      - description: "Include the data parameter in the response. The data parameter\
+          \ includes the original timeline, output and other settings sent to the\
+          \ API.<br><br><b>Note:</b> the default is currently `true`, this is deprecated\
+          \ and the default will soon be `false`. If you rely on the data being returned\
+          \ in the response you should explicitly set the parameter to `true`."
+        example: false
+        explode: true
+        in: query
+        name: data
+        required: false
+        schema:
+          type: boolean
+        style: form
+      - description: "Used when data is set to true, it will show the [merge fields](#tocs_mergefield)\
+          \ merged in to the data response."
+        example: false
+        explode: true
+        in: query
+        name: merged
+        required: false
+        schema:
+          type: boolean
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                success: true
+                message: OK
+                response:
+                  status: rendering
+                  id: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7
+                  owner: 5ca6hu7s9k
+                  url: https://shotstack-api-v1-output.s3-ap-southeast-2.amazonaws.com/5ca6hu7s9k/2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7.mp4
+                  data:
+                    $ref: ./definitions/edit.yaml
+                  created: 2020-10-30T09:42:29.446Z
+                  updated: 2020-10-30T09:42:39.168Z
+              schema:
+                $ref: '#/components/schemas/RenderResponse'
+          description: The render status details
+      security:
+      - DeveloperKey: []
+      summary: Get Render Status
+      tags:
+      - Edit
+  /templates:
+    get:
+      description: "Retrieve a list of templates stored against a users account. The\
+        \ API key is used to determine which templates\nare associated to the user.\n\
+        \n**Base URL:** http://0.0.0.0:4000/{version}\n"
+      operationId: getTemplates
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateListResponse'
+          description: The list of templates stored against a users account
+      security:
+      - DeveloperKey: []
+      summary: List Templates
+      tags:
+      - Edit
+    post:
+      description: "Save an [Edit](#tocs_edit) as a re-usable template. Templates\
+        \ can be retrieved and modified in your application\nbefore being rendered.\
+        \ [Merge fields](#tocs_mergefield) can be also used to merge data in to a\
+        \ template and\n[render](#render-template) it in a single request.\n\n**Base\
+        \ URL:** http://0.0.0.0:4000/{version}\n"
+      operationId: postTemplate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Template'
+        description: "Create a template with a name and [Edit](#tocs_edit)."
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: The saved template status including the id
+      security:
+      - DeveloperKey: []
+      summary: Create Template
+      tags:
+      - Edit
+  /templates/{id}:
+    delete:
+      description: "Delete a template by its template id.\n\n**Base URL:** http://0.0.0.0:4000/{version}\n"
+      operationId: deleteTemplate
+      parameters:
+      - description: The id of the template in UUID format
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: An empty response signifying the template has been deleted
+      security:
+      - DeveloperKey: []
+      summary: Delete Template
+      tags:
+      - Edit
+    get:
+      description: "Retrieve a template by template id.\n\n**Base URL:** http://0.0.0.0:4000/{version}\n"
+      operationId: getTemplate
+      parameters:
+      - description: The id of the template in UUID format
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateDataResponse'
+          description: "The template details including the [Edit](#tocs_edit)"
+      security:
+      - DeveloperKey: []
+      summary: Retrieve Template
+      tags:
+      - Edit
+    put:
+      description: "Update an existing template by template id.\n\n**Base URL:** http://0.0.0.0:4000/{version}\n"
+      operationId: putTemplate
+      parameters:
+      - description: The id of the template in UUID format
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Template'
+        description: "Update an individual templates name and [Edit](#tocs_edit).\
+          \ Both template name and template must be provided. If the template parameter\
+          \ is omitted a blank template will be saved."
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                success: true
+                message: OK
+                response:
+                  message: Template Successfully Updated
+                  id: f5493c17-d01f-445c-bb49-535fae65f219
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: "Update a templates name and [Edit](#tocs_edit)"
+      security:
+      - DeveloperKey: []
+      summary: Update Template
+      tags:
+      - Edit
+  /templates/render:
+    post:
+      description: "Render an asset from a template id and optional merge fields.\
+        \ Merge fields can be used to replace placeholder\nvariables within the [Edit](#tocs_edit).\n\
+        \n**Base URL:** http://0.0.0.0:4000/{version}\n"
+      operationId: postTemplateRender
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateRender'
+        description: Render a template by template id.
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueuedResponse'
+          description: "The queued status including the render id. Check the status\
+            \ of the render using the id and the  [render status](#get-render-status)\
+            \ endpoint."
+      security:
+      - DeveloperKey: []
+      summary: Render Template
+      tags:
+      - Edit
+  /probe/{url}:
+    get:
+      description: "Inspects any media asset (image, video, audio) on the internet\
+        \ using a hosted version\nof [FFprobe](https://ffmpeg.org/ffprobe.html). The\
+        \ probe endpoint returns useful information\nabout an asset such as width,\
+        \ height, duration, rotation, framerate, etc...\n\n**Base URL:** http://0.0.0.0:4000/{version}\n"
+      operationId: probe
+      parameters:
+      - description: "The URL of the media to inspect, must be **URL encoded**."
+        explode: false
+        in: path
+        name: url
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProbeResponse'
+          description: FFprobe response formatted as JSON.
+      security:
+      - DeveloperKey: []
+      summary: Inspect Media
+      tags:
+      - Edit
+  /assets/{id}:
+    delete:
+      description: "Delete an asset by its asset id. If a render creates multiple\
+        \ assets, such as thumbnail and poster images,\neach asset must be deleted\
+        \ individually by the asset id.\n\n**Base URL:** http://0.0.0.0:4000/serve/{version}\n"
+      operationId: deleteAsset
+      parameters:
+      - description: The id of the asset in UUID format
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: An empty response signifying the asset has been deleted
+      security:
+      - DeveloperKey: []
+      summary: Delete Asset
+      tags:
+      - Serve
+    get:
+      description: "The Serve API is used to interact with, and delete hosted assets\
+        \ including videos, images, audio files, \nthumbnails and poster images. Use\
+        \ this endpoint to fetch an asset by asset id. Note that an asset id is unique\n\
+        for each asset and different from the render id.\n\n**Base URL:** http://0.0.0.0:4000/serve/{version}\n"
+      operationId: getAsset
+      parameters:
+      - description: The id of the asset in UUID format
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetResponse'
+          description: Get asset by asset id
+      security:
+      - DeveloperKey: []
+      summary: Get Asset
+      tags:
+      - Serve
+  /assets/render/{id}:
+    get:
+      description: "A render may generate more than one file, such as a video, thumbnail\
+        \ and poster image. When the assets are\ncreated the only known id is the\
+        \ render id returned by the original [render request](#render-video), status\
+        \ \nrequest or webhook. This endpoint lets you look up one or more assets\
+        \ by the render id.\n\n**Base URL:** http://0.0.0.0:4000/serve/{version}\n"
+      operationId: GetAssetByRenderID
+      parameters:
+      - description: The render id associated with the asset in UUID format
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetRenderResponse'
+          description: Get one or more assets by render id
+      security:
+      - DeveloperKey: []
+      summary: Get Asset by Render ID
+      tags:
+      - Serve
+  /renders/{id}:
+    get:
+      description: "Download a render by its render id.\n\n**Base URL:** http://0.0.0.0:4000/dl/{version}\n"
+      operationId: downloadByID
+      parameters:
+      - description: The asset id to download in UUID format
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          description: The queued render details
+      security:
+      - DeveloperKey: []
+      summary: Download Asset by ID
+      tags:
+      - Download
+components:
+  callbacks: {}
+  examples: {}
+  headers: {}
+  links: {}
+  parameters: {}
+  requestBodies: {}
+  responses: {}
+  schemas:
+    Edit:
+      description: "An edit defines the arrangement of a video on a timeline, an audio\
+        \ edit or an image design and the output format."
+      example:
+        output:
+          scaleTo: preview
+          thumbnail:
+            capture: 1
+            scale: 0.3
+          size:
+            width: 1200
+            height: 800
+          repeat: true
+          destinations:
+          - null
+          - null
+          format: mp4
+          fps: 25
+          range:
+            start: 3
+            length: 6
+          aspectRatio: 16:9
+          resolution: sd
+          poster:
+            capture: 1
+          quality: medium
+        disk: local
+        merge:
+        - find: NAME
+          replace: Jane
+        - find: NAME
+          replace: Jane
+        timeline:
+          soundtrack:
+            volume: 0.8008281904610115
+            src: https://s3-ap-northeast-1.amazonaws.com/my-bucket/music.mp3
+            effect: fadeIn
+          cache: true
+          fonts:
+          - src: https://s3-ap-northeast-1.amazonaws.com/my-bucket/open-sans.ttf
+          - src: https://s3-ap-northeast-1.amazonaws.com/my-bucket/open-sans.ttf
+          background: '#000000'
+          tracks:
+          - clips:
+            - fit: crop
+              filter: greyscale
+              transform:
+                rotate:
+                  angle: 45
+                flip:
+                  horizontal: true
+                  vertical: true
+                skew:
+                  x: 0.5
+                  "y": 0.5
+              offset:
+                x: 0.1
+                "y": -0.2
+              effect: zoomIn
+              start: 2
+              length: 5
+              scale: 0
+              position: center
+              asset: null
+              opacity: 6.027456183070403
+              transition:
+                in: fade
+                out: fade
+            - fit: crop
+              filter: greyscale
+              transform:
+                rotate:
+                  angle: 45
+                flip:
+                  horizontal: true
+                  vertical: true
+                skew:
+                  x: 0.5
+                  "y": 0.5
+              offset:
+                x: 0.1
+                "y": -0.2
+              effect: zoomIn
+              start: 2
+              length: 5
+              scale: 0
+              position: center
+              asset: null
+              opacity: 6.027456183070403
+              transition:
+                in: fade
+                out: fade
+          - clips:
+            - fit: crop
+              filter: greyscale
+              transform:
+                rotate:
+                  angle: 45
+                flip:
+                  horizontal: true
+                  vertical: true
+                skew:
+                  x: 0.5
+                  "y": 0.5
+              offset:
+                x: 0.1
+                "y": -0.2
+              effect: zoomIn
+              start: 2
+              length: 5
+              scale: 0
+              position: center
+              asset: null
+              opacity: 6.027456183070403
+              transition:
+                in: fade
+                out: fade
+            - fit: crop
+              filter: greyscale
+              transform:
+                rotate:
+                  angle: 45
+                flip:
+                  horizontal: true
+                  vertical: true
+                skew:
+                  x: 0.5
+                  "y": 0.5
+              offset:
+                x: 0.1
+                "y": -0.2
+              effect: zoomIn
+              start: 2
+              length: 5
+              scale: 0
+              position: center
+              asset: null
+              opacity: 6.027456183070403
+              transition:
+                in: fade
+                out: fade
+        callback: https://my-server.com/callback.php
+      properties:
+        timeline:
+          $ref: '#/components/schemas/Timeline'
+        output:
+          $ref: '#/components/schemas/Output'
+        merge:
+          description: "An array of key/value pairs that provides an easy way to create\
+            \ templates with placeholders. The placeholders can be used to find and\
+            \ replace keys with values. For example you can search for the placeholder\
+            \ `{{NAME}}` and replace it with the value `Jane`. "
+          items:
+            $ref: '#/components/schemas/MergeField'
+          type: array
+        callback:
+          description: "An optional webhook callback URL used to receive status notifications\
+            \ when a render completes or fails. See [webhooks](https://shotstack.io/docs/guide/architecting-an-application/webhooks)\
+            \ for  more details."
+          example: https://my-server.com/callback.php
+          type: string
+        disk:
+          default: local
+          description: "The disk type to use for storing footage and assets for each\
+            \ render. See [disk types](https://shotstack.io/docs/guide/architecting-an-application/disk-types)\
+            \ for more details. <ul>\n  <li>`local` - optimized for high speed rendering\
+            \ with up to 512MB storage</li>\n  <li>`mount` - optimized for larger\
+            \ file sizes and longer videos with 5GB for source footage and 512MB for\
+            \ output render</li>\n</ul>"
+          enum:
+          - local
+          - mount
+          type: string
+      required:
+      - output
+      - timeline
+      type: object
+    Timeline:
+      description: "A timeline represents the contents of a video edit over time,\
+        \ an audio edit over time, in seconds, or an image layout. A timeline consists\
+        \ of layers called tracks. Tracks are composed of titles, images, audio, html\
+        \ or video segments referred to as clips which are placed along the track\
+        \ at specific starting point and lasting for a specific amount of time."
+      example:
+        soundtrack:
+          volume: 0.8008281904610115
+          src: https://s3-ap-northeast-1.amazonaws.com/my-bucket/music.mp3
+          effect: fadeIn
+        cache: true
+        fonts:
+        - src: https://s3-ap-northeast-1.amazonaws.com/my-bucket/open-sans.ttf
+        - src: https://s3-ap-northeast-1.amazonaws.com/my-bucket/open-sans.ttf
+        background: '#000000'
+        tracks:
+        - clips:
+          - fit: crop
+            filter: greyscale
+            transform:
+              rotate:
+                angle: 45
+              flip:
+                horizontal: true
+                vertical: true
+              skew:
+                x: 0.5
+                "y": 0.5
+            offset:
+              x: 0.1
+              "y": -0.2
+            effect: zoomIn
+            start: 2
+            length: 5
+            scale: 0
+            position: center
+            asset: null
+            opacity: 6.027456183070403
+            transition:
+              in: fade
+              out: fade
+          - fit: crop
+            filter: greyscale
+            transform:
+              rotate:
+                angle: 45
+              flip:
+                horizontal: true
+                vertical: true
+              skew:
+                x: 0.5
+                "y": 0.5
+            offset:
+              x: 0.1
+              "y": -0.2
+            effect: zoomIn
+            start: 2
+            length: 5
+            scale: 0
+            position: center
+            asset: null
+            opacity: 6.027456183070403
+            transition:
+              in: fade
+              out: fade
+        - clips:
+          - fit: crop
+            filter: greyscale
+            transform:
+              rotate:
+                angle: 45
+              flip:
+                horizontal: true
+                vertical: true
+              skew:
+                x: 0.5
+                "y": 0.5
+            offset:
+              x: 0.1
+              "y": -0.2
+            effect: zoomIn
+            start: 2
+            length: 5
+            scale: 0
+            position: center
+            asset: null
+            opacity: 6.027456183070403
+            transition:
+              in: fade
+              out: fade
+          - fit: crop
+            filter: greyscale
+            transform:
+              rotate:
+                angle: 45
+              flip:
+                horizontal: true
+                vertical: true
+              skew:
+                x: 0.5
+                "y": 0.5
+            offset:
+              x: 0.1
+              "y": -0.2
+            effect: zoomIn
+            start: 2
+            length: 5
+            scale: 0
+            position: center
+            asset: null
+            opacity: 6.027456183070403
+            transition:
+              in: fade
+              out: fade
+      properties:
+        soundtrack:
+          $ref: '#/components/schemas/Soundtrack'
+        background:
+          default: '#000000'
+          description: "A hexadecimal value for the timeline background color. Defaults\
+            \ to #000000 (black)."
+          type: string
+        fonts:
+          description: An array of custom fonts to be downloaded for use by the HTML
+            assets.
+          items:
+            $ref: '#/components/schemas/Font'
+          type: array
+        tracks:
+          description: "A timeline consists of an array of tracks, each track containing\
+            \ clips. Tracks are layered on top of each other in the same order they\
+            \ are added to the array with the top most track layered over the top\
+            \ of those below it. Ensure that a track containing titles is the top\
+            \ most track so that it is displayed above videos and images."
+          items:
+            $ref: '#/components/schemas/Track'
+          type: array
+        cache:
+          default: true
+          description: "Disable the caching of ingested source footage and assets.\
+            \ See  [caching](https://shotstack.io/docs/guide/architecting-an-application/caching)\
+            \ for more details."
+          type: boolean
+      required:
+      - tracks
+      type: object
+    Soundtrack:
+      description: "A music or audio file in mp3 format that plays for the duration\
+        \ of the rendered video or the length of the audio file, which ever is shortest."
+      example:
+        volume: 0.8008281904610115
+        src: https://s3-ap-northeast-1.amazonaws.com/my-bucket/music.mp3
+        effect: fadeIn
+      properties:
+        src:
+          description: The URL of the mp3 audio file. The URL must be publicly accessible
+            or include credentials.
+          example: https://s3-ap-northeast-1.amazonaws.com/my-bucket/music.mp3
+          type: string
+        effect:
+          description: |-
+            The effect to apply to the audio file <ul>
+              <li>`fadeIn` - fade volume in only</li>
+              <li>`fadeOut` - fade volume out only</li>
+              <li>`fadeInFadeOut` - fade volume in and out</li>
+            </ul>
+          enum:
+          - fadeIn
+          - fadeOut
+          - fadeInFadeOut
+          type: string
+        volume:
+          default: 1
+          description: Set the volume for the soundtrack between 0 and 1 where 0 is
+            muted and 1 is full volume (defaults to 1).
+          type: number
+      required:
+      - src
+      type: object
+    Font:
+      description: "Download a custom font to use with the HTML asset type, using\
+        \ the font name in the CSS or font tag. See our [custom fonts](https://shotstack.io/learn/html-custom-fonts/)\
+        \ getting started guide for more details."
+      example:
+        src: https://s3-ap-northeast-1.amazonaws.com/my-bucket/open-sans.ttf
+      properties:
+        src:
+          description: The URL of the font file. The URL must be publicly accessible
+            or include credentials.
+          example: https://s3-ap-northeast-1.amazonaws.com/my-bucket/open-sans.ttf
+          type: string
+      required:
+      - src
+      type: object
+    Track:
+      description: A track contains an array of clips. Tracks are layered on top of
+        each other in the order in the array. The top most track will render on top
+        of those below it.
+      example:
+        clips:
+        - fit: crop
+          filter: greyscale
+          transform:
+            rotate:
+              angle: 45
+            flip:
+              horizontal: true
+              vertical: true
+            skew:
+              x: 0.5
+              "y": 0.5
+          offset:
+            x: 0.1
+            "y": -0.2
+          effect: zoomIn
+          start: 2
+          length: 5
+          scale: 0
+          position: center
+          asset: null
+          opacity: 6.027456183070403
+          transition:
+            in: fade
+            out: fade
+        - fit: crop
+          filter: greyscale
+          transform:
+            rotate:
+              angle: 45
+            flip:
+              horizontal: true
+              vertical: true
+            skew:
+              x: 0.5
+              "y": 0.5
+          offset:
+            x: 0.1
+            "y": -0.2
+          effect: zoomIn
+          start: 2
+          length: 5
+          scale: 0
+          position: center
+          asset: null
+          opacity: 6.027456183070403
+          transition:
+            in: fade
+            out: fade
+      properties:
+        clips:
+          description: "An array of Clips comprising of TitleClip, ImageClip or VideoClip."
+          items:
+            $ref: '#/components/schemas/Clip'
+          type: array
+      required:
+      - clips
+      type: object
+    Clip:
+      description: "A clip is a container for a specific type of asset, i.e. a title,\
+        \ image, video, audio or html. You use a Clip to define when an asset will\
+        \ display on the timeline, how long it will play for and transitions, filters\
+        \ and effects to apply to it."
+      example:
+        fit: crop
+        filter: greyscale
+        transform:
+          rotate:
+            angle: 45
+          flip:
+            horizontal: true
+            vertical: true
+          skew:
+            x: 0.5
+            "y": 0.5
+        offset:
+          x: 0.1
+          "y": -0.2
+        effect: zoomIn
+        start: 2
+        length: 5
+        scale: 0
+        position: center
+        asset: null
+        opacity: 6.027456183070403
+        transition:
+          in: fade
+          out: fade
+      properties:
+        asset:
+          $ref: '#/components/schemas/Asset'
+        start:
+          description: "The start position of the Clip on the timeline, in seconds."
+          example: 2
+          type: number
+        length:
+          description: "The length, in seconds, the Clip should play for."
+          example: 5
+          type: number
+        fit:
+          default: crop
+          description: "Set how the asset should be scaled to fit the viewport using\
+            \ one of the following options: \n  <ul>\n    <li>`cover` - stretch the\
+            \ asset to fill the viewport without maintaining the aspect ratio.</li>\n\
+            \    <li>`contain` - fit the entire asset within the viewport while maintaining\
+            \ the original aspect ratio.</li>\n    <li>`crop` - scale the asset to\
+            \ fill the viewport while maintaining the aspect ratio. The asset will\
+            \ be cropped if it exceeds the bounds of the viewport.</li>\n    <li>`none`\
+            \ - preserves the original asset dimensions and does not apply any scaling.</li>\n\
+            \  </ul>"
+          enum:
+          - cover
+          - contain
+          - crop
+          - none
+          type: string
+        scale:
+          description: Scale the asset to a fraction of the viewport size - i.e. setting
+            the scale to 0.5 will scale asset to half the size of the viewport. This
+            is useful for picture-in-picture video and  scaling images such as logos
+            and watermarks.
+          example: 0
+          type: number
+        position:
+          default: center
+          description: |-
+            Place the asset in one of nine predefined positions of the viewport. This is most effective for when the asset is scaled and you want to position the element to a specific position. <ul>
+              <li>`top` - top (center)</li>
+              <li>`topRight` - top right</li>
+              <li>`right` - right (center)</li>
+              <li>`bottomRight` - bottom right</li>
+              <li>`bottom` - bottom (center)</li>
+              <li>`bottomLeft` - bottom left</li>
+              <li>`left` - left (center)</li>
+              <li>`topLeft` - top left</li>
+              <li>`center` - center</li>
+            </ul>
+          enum:
+          - top
+          - topRight
+          - right
+          - bottomRight
+          - bottom
+          - bottomLeft
+          - left
+          - topLeft
+          - center
+          type: string
+        offset:
+          $ref: '#/components/schemas/Offset'
+        transition:
+          $ref: '#/components/schemas/Transition'
+        effect:
+          description: |-
+            A motion effect to apply to the Clip. <ul>
+              <li>`zoomIn` - slow zoom in</li>
+              <li>`zoomOut` - slow zoom out</li>
+              <li>`slideLeft` - slow slide (pan) left</li>
+              <li>`slideRight` - slow slide (pan) right</li>
+              <li>`slideUp` - slow slide (pan) up</li>
+              <li>`slideDown` - slow slide (pan) down</li>
+            </ul>
+          enum:
+          - zoomIn
+          - zoomOut
+          - slideLeft
+          - slideRight
+          - slideUp
+          - slideDown
+          type: string
+        filter:
+          description: |-
+            A filter effect to apply to the Clip. <ul>
+              <li>`boost` - boost contrast and saturation</li>
+              <li>`contrast` - increase contrast</li>
+              <li>`darken` - darken the scene</li>
+              <li>`greyscale` - remove colour</li>
+              <li>`lighten` - lighten the scene</li>
+              <li>`muted` - reduce saturation and contrast</li>
+              <li>`invert` - invert colors</li>
+            </ul>
+          enum:
+          - boost
+          - contrast
+          - darken
+          - greyscale
+          - lighten
+          - muted
+          - negative
+          example: greyscale
+          type: string
+        opacity:
+          default: 1
+          description: Sets the opacity of the Clip where 1 is opaque and 0 is transparent.
+          type: number
+        transform:
+          $ref: '#/components/schemas/Transformation'
+      required:
+      - asset
+      - length
+      - start
+      type: object
+    Asset:
+      additionalProperties: false
+      description: |-
+        The type of asset to display for the duration of this Clip. Value
+            must be one of:
+              <ul>
+                <li><a href="#tocs_videoasset">VideoAsset</a></li>
+                <li><a href="#tocs_imageasset">ImageAsset</a></li>
+                <li><a href="#tocs_titleasset">TitleAsset</a></li>
+                <li><a href="#tocs_HTMLAsset">HTMLAsset</a></li>
+                <li><a href="#tocs_audioasset">AudioAsset</a></li>
+                <li><a href="#tocs_lumaasset">LumaAsset</a></li>
+              </ul>
+      discriminator:
+        propertyName: asset
+      oneOf:
+      - $ref: '#/components/schemas/VideoAsset'
+      - $ref: '#/components/schemas/ImageAsset'
+      - $ref: '#/components/schemas/TitleAsset'
+      - $ref: '#/components/schemas/HTMLAsset'
+      - $ref: '#/components/schemas/AudioAsset'
+      - $ref: '#/components/schemas/LumaAsset'
+      type: object
+    VideoAsset:
+      description: The VideoAsset is used to create video sequences from video files.
+        The src must be a publicly accessible URL to a video resource such as an mp4
+        file.
+      properties:
+        type:
+          default: video
+          description: The type of asset - set to `video` for videos.
+          type: string
+        src:
+          description: The video source URL. The URL must be publicly accessible or
+            include credentials.
+          example: https://s3-ap-northeast-1.amazonaws.com/my-bucket/video.mp4
+          type: string
+        trim:
+          description: "The start trim point of the video clip, in seconds (defaults\
+            \ to 0). Videos will start from the in trim point. The video will play\
+            \ until the file ends or the Clip length is reached."
+          example: 2
+          type: number
+        volume:
+          description: Set the volume for the video clip between 0 and 1 where 0 is
+            muted and 1 is full volume (defaults to 0).
+          example: 1
+          type: number
+        crop:
+          $ref: '#/components/schemas/Crop'
+        subtitle:
+          $ref: '#/components/schemas/Subtitle'
+      required:
+      - src
+      - type
+      type: object
+    ImageAsset:
+      description: The ImageAsset is used to create video from images to compose an
+        image. The src must be a publicly accessible URL to an image resource such
+        as a jpg or png file.
+      properties:
+        type:
+          default: image
+          description: The type of asset - set to `image` for images.
+          type: string
+        src:
+          description: The image source URL. The URL must be publicly accessible or
+            include credentials.
+          example: https://s3-ap-northeast-1.amazonaws.com/my-bucket/image.jpg
+          type: string
+        crop:
+          $ref: '#/components/schemas/Crop'
+      required:
+      - src
+      - type
+      type: object
+    TitleAsset:
+      description: The TitleAsset clip type lets you create video titles from a text
+        string and apply styling and positioning.
+      properties:
+        type:
+          default: title
+          description: The type of asset - set to `title` for titles.
+          type: string
+        text:
+          description: The title text string - i.e. "My Title".
+          example: Hello World
+          type: string
+        style:
+          description: |-
+            Uses a preset to apply font properties and styling to the title. <ul>
+              <li>`minimal`</li>
+              <li>`blockbuster`</li>
+              <li>`vogue`</li>
+              <li>`sketchy`</li>
+              <li>`skinny`</li>
+              <li>`chunk`</li>
+              <li>`chunkLight`</li>
+              <li>`marker`</li>
+              <li>`future`</li>
+              <li>`subtitle`</li>
+            </ul>
+          enum:
+          - minimal
+          - blockbuster
+          - vogue
+          - sketchy
+          - skinny
+          - chunk
+          - chunkLight
+          - marker
+          - future
+          - subtitle
+          type: string
+        color:
+          default: '#ffffff'
+          description: "Set the text color using hexadecimal color notation. Transparency\
+            \ is supported by setting the first two characters of the hex string (opposite\
+            \ to HTML),  i.e. #80ffffff will be white with  50% transparency."
+          type: string
+        size:
+          default: medium
+          description: |-
+            Set the relative size of the text using predefined sizes from xx-small to xx-large. <ul>
+              <li>`xx-small`</li>
+              <li>`x-small`</li>
+              <li>`small`</li>
+              <li>`medium`</li>
+              <li>`large`</li>
+              <li>`x-large`</li>
+              <li>`xx-large`</li>
+            </ul>
+          enum:
+          - xx-small
+          - x-small
+          - small
+          - medium
+          - large
+          - x-large
+          - xx-large
+          type: string
+        background:
+          description: "Apply a background color behind the text. Set the text color\
+            \ using hexadecimal color notation. Transparency is supported by setting\
+            \ the first two characters of the hex string (opposite to HTML),  i.e.\
+            \ #80ffffff will be white with 50% transparency. Omit to use transparent\
+            \ background."
+          example: '#000000'
+          type: string
+        position:
+          default: center
+          description: |-
+            Place the title in one of nine predefined positions of the viewport. <ul>
+              <li>`top` - top (center)</li>
+              <li>`topRight` - top right</li>
+              <li>`right` - right (center)</li>
+              <li>`bottomRight` - bottom right</li>
+              <li>`bottom` - bottom (center)</li>
+              <li>`bottomLeft` - bottom left</li>
+              <li>`left` - left (center)</li>
+              <li>`topLeft` - top left</li>
+              <li>`center` - center</li>
+            </ul>
+          enum:
+          - top
+          - topRight
+          - right
+          - bottomRight
+          - bottom
+          - bottomLeft
+          - left
+          - topLeft
+          - center
+          type: string
+        offset:
+          $ref: '#/components/schemas/Offset'
+      required:
+      - text
+      - type
+      type: object
+    HTMLAsset:
+      description: The HTMLAsset clip type lets you create text based layout and formatting
+        using HTML and CSS. You can also set the height and width of a bounding box
+        for the HTML content to sit within. Text and elements will wrap within the
+        bounding box.
+      properties:
+        type:
+          default: html
+          description: The type of asset - set to `html` for HTML.
+          type: string
+        html:
+          description: "The HTML text string. See list of [supported HTML tags](https://shotstack.io/docs/guide/architecting-an-application/html-support#supported-html-tags)."
+          example: <p>Hello <b>World</b></p>
+          type: string
+        css:
+          description: "The CSS text string to apply styling to the HTML. See list\
+            \ of  [support CSS properties](https://shotstack.io/docs/guide/architecting-an-application/html-support#supported-css-properties)."
+          example: "p { color: #ffffff; } b { color: #ffff00; }"
+          type: string
+        width:
+          description: Set the width of the HTML asset bounding box in pixels. Text
+            will wrap to fill the bounding box.
+          example: 400
+          type: integer
+        height:
+          description: Set the width of the HTML asset bounding box in pixels. Text
+            and elements will be masked if they exceed the  height of the bounding
+            box.
+          example: 200
+          type: integer
+        background:
+          default: transparent
+          description: "Apply a background color behind the HTML bounding box using.\
+            \ Set the text color using hexadecimal  color notation. Transparency is\
+            \ supported by setting the first two characters of the hex string  (opposite\
+            \ to HTML), i.e. #80ffffff will be white with 50% transparency."
+          type: string
+        position:
+          default: center
+          description: |-
+            Place the HTML in one of nine predefined positions within the HTML area. <ul>
+              <li>`top` - top (center)</li>
+              <li>`topRight` - top right</li>
+              <li>`right` - right (center)</li>
+              <li>`bottomRight` - bottom right</li>
+              <li>`bottom` - bottom (center)</li>
+              <li>`bottomLeft` - bottom left</li>
+              <li>`left` - left (center)</li>
+              <li>`topLeft` - top left</li>
+              <li>`center` - center</li>
+            </ul>
+          enum:
+          - top
+          - topRight
+          - right
+          - bottomRight
+          - bottom
+          - bottomLeft
+          - left
+          - topLeft
+          - center
+          type: string
+      required:
+      - html
+      - type
+      type: object
+    AudioAsset:
+      description: The AudioAsset is used to add sound effects and audio at specific
+        intervals on the timeline. The src must be a publicly accessible URL to an
+        audio resource such  as an mp3 file.
+      properties:
+        type:
+          default: audio
+          description: The type of asset - set to `audio` for audio assets.
+          type: string
+        src:
+          description: The audio source URL. The URL must be publicly accessible or
+            include credentials.
+          example: https://s3-ap-northeast-1.amazonaws.com/my-bucket/sound.mp3
+          type: string
+        trim:
+          description: "The start trim point of the audio clip, in seconds (defaults\
+            \ to 0). Audio will start from the in trim point. The audio will play\
+            \ until the file ends or the Clip length is reached."
+          type: number
+        volume:
+          default: 1
+          description: Set the volume for the audio clip between 0 and 1 where 0 is
+            muted and 1 is full volume (defaults to 1).
+          type: number
+        effect:
+          description: |-
+            The effect to apply to the audio asset <ul>
+              <li>`fadeIn` - fade volume in only</li>
+              <li>`fadeOut` - fade volume out only</li>
+              <li>`fadeInFadeOut` - fade volume in and out</li>
+            </ul>
+          enum:
+          - fadeIn
+          - fadeOut
+          - fadeInFadeOut
+          type: string
+      required:
+      - src
+      - type
+      type: object
+    LumaAsset:
+      description: "The LumaAsset is used to create luma matte masks, transitions\
+        \ and effects between other assets. A luma matte is a grey scale image or\
+        \ animated video where the black areas are transparent and the white areas\
+        \ solid. The luma matte animation should be provided as an mp4 video file.\
+        \ The src must be a publicly accessible URL to the file."
+      properties:
+        type:
+          default: luma
+          description: The type of asset - set to `luma` for luma mattes.
+          type: string
+        src:
+          description: The luma matte source URL. The URL must be publicly accessible
+            or include credentials.
+          example: https://s3-ap-northeast-1.amazonaws.com/my-bucket/mask.mp4
+          type: string
+        trim:
+          description: "The start trim point of the luma matte clip, in seconds (defaults\
+            \ to 0). Videos will start from the in trim point. A luma matte video\
+            \ will play until the file ends or the Clip length is reached."
+          type: number
+      required:
+      - src
+      - type
+      type: object
+    Transition:
+      description: In and out transitions for a clip - i.e. fade in and fade out
+      example:
+        in: fade
+        out: fade
+      properties:
+        in:
+          description: "The transition in. Available transitions are:\n  <ul>\n  \
+            \  <li>`fade` - fade in</li>\n    <li>`reveal` - reveal from left to right</li>\n\
+            \    <li>`wipeLeft` - fade across screen to the left</li>\n    <li>`wipeRight`\
+            \ - fade across screen to the right</li>\n    <li>`slideLeft` - move slightly\
+            \ left and fade in</li>\n    <li>`slideRight` - move slightly right and\
+            \ fade in</li>\n    <li>`slideUp` - move slightly up and fade in</li>\n\
+            \    <li>`slideDown` - move slightly down and fade in</li>\n    <li>`carouselLeft`\
+            \ - slide in from right to left</li>\n    <li>`carouselRight` - slide\
+            \ in from left to right</li>\n    <li>`carouselUp` - slide in from bottom\
+            \ to top</li>\n    <li>`carouselDown` - slide in from top to bottom</li>\n\
+            \    <li>`shuffleTopRight` - rotate in from top right</li>\n    <li>`shuffleRightTop`\
+            \ - rotate in from right top</li>\n    <li>`shuffleRightBottom` - rotate\
+            \ in from right bottom</li>\n    <li>`shuffleBottomRight` - rotate in\
+            \ from bottom right</li>\n    <li>`shuffleBottomLeft` - rotate in from\
+            \ bottom left</li>\n    <li>`shuffleLeftBottom` - rotate in from left\
+            \ bottom</li>\n    <li>`shuffleLeftTop` - rotate in from left top</li>\n\
+            \    <li>`shuffleTopLeft` - rotate in from top left</li>\n    <li>`zoom`\
+            \ - fast zoom in</li>\n  </ul>\nThe transition speed can also be controlled\
+            \ by appending `Fast` or `Slow` to the transition, e.g. `fadeFast` or\
+            \ `CarouselLeftSlow`."
+          enum:
+          - fade
+          - fadeSlow
+          - fadeFast
+          - reveal
+          - revealSlow
+          - revealFast
+          - wipeLeft
+          - wipeLeftSlow
+          - wipeLeftFast
+          - wipeRight
+          - wipeRightSlow
+          - wipeRightFast
+          - slideLeft
+          - slideLeftSlow
+          - slideLeftFast
+          - slideRight
+          - slideRightSlow
+          - slideRightFast
+          - slideUp
+          - slideUpSlow
+          - slideUpFast
+          - slideDown
+          - slideDownSlow
+          - slideDownFast
+          - carouselLeft
+          - carouselLeftSlow
+          - carouselLeftFast
+          - carouselRight
+          - carouselRightSlow
+          - carouselRightFast
+          - carouselUp
+          - carouselUpSlow
+          - carouselUpFast
+          - carouselDown
+          - carouselDownSlow
+          - carouselDownFast
+          - shuffleTopRight
+          - shuffleTopRightSlow
+          - shuffleTopRightFast
+          - shuffleRightTop
+          - shuffleRightTopSlow
+          - shuffleRightTopFast
+          - shuffleRightBottom
+          - shuffleRightBottomSlow
+          - shuffleRightBottomFast
+          - shuffleBottomRight
+          - shuffleBottomRightSlow
+          - shuffleBottomRightFast
+          - shuffleBottomLeft
+          - shuffleBottomLeftSlow
+          - shuffleBottomLeftFast
+          - shuffleLeftBottom
+          - shuffleLeftBottomSlow
+          - shuffleLeftBottomFast
+          - shuffleLeftTop
+          - shuffleLeftTopSlow
+          - shuffleLeftTopFast
+          - shuffleTopLeft
+          - shuffleTopLeftSlow
+          - shuffleTopLeftFast
+          - zoom
+          type: string
+        out:
+          description: "The transition out. Available transitions are:\n  <ul>\n \
+            \   <li>`fade` - fade out</li>\n    <li>`reveal` - reveal from right to\
+            \ left</li>\n    <li>`wipeLeft` - fade across screen to the left</li>\n\
+            \    <li>`wipeRight` - fade across screen to the right</li>\n    <li>`slideLeft`\
+            \ - move slightly left and fade out</li>\n    <li>`slideRight` - move\
+            \ slightly right and fade out</li>\n    <li>`slideUp` - move slightly\
+            \ up and fade out</li>\n    <li>`slideDown` - move slightly down and fade\
+            \ out</li>\n    <li>`carouselLeft` - slide out from right to left</li>\n\
+            \    <li>`carouselRight` - slide out from left to right</li>\n    <li>`carouselUp`\
+            \ - slide out from bottom to top</li>\n    <li>`carouselDown` - slide\
+            \ out from top  to bottom</li>\n    <li>`shuffleTopRight` - rotate out\
+            \ from top right</li>\n    <li>`shuffleRightTop` - rotate out from right\
+            \ top</li>\n    <li>`shuffleRightBottom` - rotate out from right bottom</li>\n\
+            \    <li>`shuffleBottomRight` - rotate out from bottom right</li>\n  \
+            \  <li>`shuffleBottomLeft` - rotate out from bottom left</li>\n    <li>`shuffleLeftBottom`\
+            \ - rotate out from left bottom</li>\n    <li>`shuffleLeftTop` - rotate\
+            \ out from left top</li>\n    <li>`shuffleTopLeft` - rotate out from top\
+            \ left</li>\n    <li>`zoom` - fast zoom out</li>\n  </ul>\nThe transition\
+            \ speed can also be controlled by appending `Fast` or `Slow` to the transition,\
+            \ e.g. `fadeFast` or `CarouselLeftSlow`."
+          enum:
+          - fade
+          - fadeSlow
+          - fadeFast
+          - reveal
+          - revealSlow
+          - revealFast
+          - wipeLeft
+          - wipeLeftSlow
+          - wipeLeftFast
+          - wipeRight
+          - wipeRightSlow
+          - wipeRightFast
+          - slideLeft
+          - slideLeftSlow
+          - slideLeftFast
+          - slideRight
+          - slideRightSlow
+          - slideRightFast
+          - slideUp
+          - slideUpSlow
+          - slideUpFast
+          - slideDown
+          - slideDownSlow
+          - slideDownFast
+          - carouselLeft
+          - carouselLeftSlow
+          - carouselLeftFast
+          - carouselRight
+          - carouselRightSlow
+          - carouselRightFast
+          - carouselUp
+          - carouselUpSlow
+          - carouselUpFast
+          - carouselDown
+          - carouselDownSlow
+          - carouselDownFast
+          - shuffleTopRight
+          - shuffleTopRightSlow
+          - shuffleTopRightFast
+          - shuffleRightTop
+          - shuffleRightTopSlow
+          - shuffleRightTopFast
+          - shuffleRightBottom
+          - shuffleRightBottomSlow
+          - shuffleRightBottomFast
+          - shuffleBottomRight
+          - shuffleBottomRightSlow
+          - shuffleBottomRightFast
+          - shuffleBottomLeft
+          - shuffleBottomLeftSlow
+          - shuffleBottomLeftFast
+          - shuffleLeftBottom
+          - shuffleLeftBottomSlow
+          - shuffleLeftBottomFast
+          - shuffleLeftTop
+          - shuffleLeftTopSlow
+          - shuffleLeftTopFast
+          - shuffleTopLeft
+          - shuffleTopLeftSlow
+          - shuffleTopLeftFast
+          - zoom
+          type: string
+      type: object
+    Offset:
+      description: Offsets the position of an asset horizontally or vertically by
+        a relative distance.
+      example:
+        x: 0.1
+        "y": -0.2
+      properties:
+        x:
+          default: 0
+          description: "Offset an asset on the horizontal axis (left or right), range\
+            \ varies from -1 to 1. Positive numbers move the asset right, negative\
+            \ left. For all assets except titles the distance moved is relative to\
+            \ the width  of the viewport - i.e. an X offset of 0.5 will move the asset\
+            \ half the  screen width to the right."
+          example: 0.1
+          format: float
+          maximum: 1
+          minimum: -1
+          type: number
+        "y":
+          default: 0
+          description: "Offset an asset on the vertical axis (up or down), range varies\
+            \ from -1 to 1. Positive numbers move the asset up, negative down. For\
+            \ all assets except titles the distance moved is relative to the height\
+            \  of the viewport - i.e. an Y offset of 0.5 will move the asset up half\
+            \ the  screen height."
+          example: -0.2
+          format: float
+          maximum: 1
+          minimum: -1
+          type: number
+      type: object
+    Crop:
+      description: "Crop the sides of an asset by a relative amount. The size of the\
+        \ crop is specified using a scale between 0 and 1, relative to the screen\
+        \ width - i.e a left crop of 0.5 will crop half of the asset from the left,\
+        \ a top crop  of 0.25 will crop the top by quarter of the asset."
+      properties:
+        top:
+          description: Crop from the top of the asset
+          example: 0.15
+          format: float
+          maximum: 1
+          minimum: 0
+          type: number
+        bottom:
+          description: Crop from the bottom of the asset
+          example: 0.15
+          format: float
+          maximum: 1
+          minimum: 0
+          type: number
+        left:
+          description: Crop from the left of the asset
+          format: float
+          maximum: 1
+          minimum: 0
+          type: number
+        right:
+          description: Crop from the left of the asset
+          format: float
+          maximum: 1
+          minimum: 0
+          type: number
+      type: object
+    Subtitle:
+      description: "Subtitle allow to burn a specific subtitle into the video."
+      properties:
+        index:
+          description: Index of the subtitle stream (Default to 0)
+          default: 0
+          example: 1
+          format: int
+          minimum: 0
+          type: number
+      type: object
+    Transformation:
+      description: Apply one or more transformations to a clip. Transformations alter
+        the visual properties of a clip and can be combined to create new shapes and
+        effects.
+      example:
+        rotate:
+          angle: 45
+        flip:
+          horizontal: true
+          vertical: true
+        skew:
+          x: 0.5
+          "y": 0.5
+      properties:
+        rotate:
+          $ref: '#/components/schemas/RotateTransformation'
+        skew:
+          $ref: '#/components/schemas/SkewTransformation'
+        flip:
+          $ref: '#/components/schemas/FlipTransformation'
+      type: object
+    RotateTransformation:
+      description: Rotate a clip by the specified angle in degrees. Rotation origin
+        is set based on the clips `position`.
+      example:
+        angle: 45
+      properties:
+        angle:
+          default: 0
+          description: "The angle to rotate the clip. Can be 0 to 360, or 0 to -360.\
+            \ Using a positive number rotates the clip clockwise, negative numbers\
+            \ counter-clockwise."
+          example: 45
+          type: integer
+      type: object
+    SkewTransformation:
+      description: Skew a clip so its edges are sheared at an angle. Use values between
+        0 and 3. Over 3 the clip will be skewed almost flat.
+      example:
+        x: 0.5
+        "y": 0.5
+      properties:
+        x:
+          default: 0
+          description: Skew the clip along it's x axis.
+          example: 0.5
+          format: float
+          type: number
+        "y":
+          default: 0
+          description: Skew the clip along it's y axis.
+          example: 0.5
+          format: float
+          type: number
+      type: object
+    FlipTransformation:
+      description: Flip a clip vertically or horizontally. Acts as a mirror effect
+        of the clip along the selected plane.
+      example:
+        horizontal: true
+        vertical: true
+      properties:
+        horizontal:
+          default: false
+          description: Flip a clip horizontally.
+          example: true
+          type: boolean
+        vertical:
+          default: false
+          description: Flip a clip vertically.
+          example: true
+          type: boolean
+      type: object
+    MergeField:
+      description: "A merge field consists of a key; `find`, and a value; `replace`.\
+        \ Merge fields can be used to replace placeholders within the JSON edit to\
+        \ create re-usable templates. Placeholders should be a string with double\
+        \ brace delimiters, i.e. `\"{{NAME}}\"`. A placeholder can be used for any\
+        \ value within the JSON edit."
+      example:
+        find: NAME
+        replace: Jane
+      properties:
+        find:
+          description: The string to find <u>without</u> delimiters.
+          example: NAME
+          type: string
+        replace:
+          description: "The replacement value. The replacement can be any valid JSON\
+            \ type - string, boolean, number, etc..."
+          example: Jane
+      required:
+      - find
+      - replace
+      type: object
+    Output:
+      description: "The output format, render range and type of media to generate."
+      example:
+        scaleTo: preview
+        thumbnail:
+          capture: 1
+          scale: 0.3
+        size:
+          width: 1200
+          height: 800
+        repeat: true
+        destinations:
+        - null
+        - null
+        format: mp4
+        fps: 25
+        range:
+          start: 3
+          length: 6
+        aspectRatio: 16:9
+        resolution: sd
+        poster:
+          capture: 1
+        quality: medium
+      properties:
+        format:
+          description: |-
+            The output format and type of media file to generate. <ul>
+              <li>`mp4` - mp4 video file</li>
+              <li>`gif` - animated gif</li>
+              <li>`jpg` - jpg image file</li>
+              <li>`png` - png image file</li>
+              <li>`bmp` - bmp image file</li>
+              <li>`mp3` - mp3 audio file (audio only)</li>
+            </ul>
+          enum:
+          - mp4
+          - gif
+          - mp3
+          - jpg
+          - png
+          - bmp
+          example: mp4
+          type: string
+        resolution:
+          description: |-
+            The output resolution of the video or image. <ul>
+              <li>`preview` - 512px x 288px @ 15fps</li>
+              <li>`mobile` - 640px x 360px @ 25fps</li>
+              <li>`sd` - 1024px x 576px @ 25fps</li>
+              <li>`hd` - 1280px x 720px @ 25fps</li>
+              <li>`1080` - 1920px x 1080px @ 25fps</li>
+              <li>`360` - 640px x 360px @ 25fps</li>
+              <li>`480` - 848px x 480px @ 25fps</li>
+              <li>`540` - 960px x 540px @ 25fps</li>
+              <li>`720` - 1280px x 720px @ 25fps</li>
+            </ul>
+          enum:
+          - preview
+          - mobile
+          - sd
+          - hd
+          - "1080"
+          - "360"
+          - "480"
+          - "540"
+          - "720"
+          example: sd
+          type: string
+        aspectRatio:
+          description: "The aspect ratio (shape) of the video or image. Useful for\
+            \ social media output formats. Options are: <ul>\n  <li>`16:9` - regular\
+            \ landscape/horizontal aspect ratio (default)</li>\n  <li>`9:16` - vertical/portrait\
+            \ aspect ratio</li>\n  <li>`1:1` - square aspect ratio</li>\n  <li>`4:5`\
+            \ - short vertical/portrait aspect ratio</li>\n  <li>`4:3` - legacy TV\
+            \ aspect ratio</li>\n</ul>"
+          enum:
+          - 16:9
+          - 9:16
+          - 1:1
+          - 4:5
+          - 4:3
+          example: 16:9
+          type: string
+        size:
+          $ref: '#/components/schemas/Size'
+        fps:
+          description: "Override the default frames per second. Useful for when the\
+            \ source footage is recorded at 30fps, i.e. on  mobile devices. Lower\
+            \ frame rates can be used to add cinematic quality (24fps) or to create\
+            \ smaller file size/faster render times or animated gifs (12 or 15fps).\
+            \ Default is 25fps. <ul>\n  <li>`12` - 12fps</li>\n  <li>`15` - 15fps</li>\n\
+            \  <li>`24` - 24fps</li>\n  <li>`23.976` - 23.976fps</li>\n  <li>`25`\
+            \ - 25fps</li>\n  <li>`29.97` - 29.97fps</li>\n  <li>`30` - 30fps</li>\n\
+            </ul>"
+          enum:
+          - 12
+          - 15
+          - 23.976
+          - 24
+          - 25
+          - 29.97
+          - 30
+          example: 25
+          type: number
+        scaleTo:
+          description: "Override the resolution and scale the video or image to render\
+            \ at a different size. When using scaleTo the asset should be edited at\
+            \ the resolution dimensions, i.e. use font sizes that look best at HD,\
+            \ then use scaleTo to output the file at SD and the text will be scaled\
+            \ to the correct size. This is useful if you want to create multiple asset\
+            \ sizes. <ul>\n  <li>`preview` - 512px x 288px @ 15fps</li>\n  <li>`mobile`\
+            \ - 640px x 360px @ 25fps</li>\n  <li>`sd` - 1024px x 576px @25fps</li>\n\
+            \  <li>`hd` - 1280px x 720px @25fps</li>\n  <li>`1080` - 1920px x 1080px\
+            \ @25fps</li>\n</ul>"
+          enum:
+          - preview
+          - mobile
+          - sd
+          - hd
+          - "1080"
+          type: string
+        quality:
+          default: medium
+          description: "Adjust the output quality of the video, image or audio. Adjusting\
+            \ quality affects  render speed, download speeds and storage requirements\
+            \ due to file size. The default `medium` provides the most optimized choice\
+            \ for all three  factors. <ul>\n  <li>`low` - slightly reduced quality,\
+            \ smaller file size</li>\n  <li>`medium` - optimized quality, render speeds\
+            \ and file size</li>\n  <li>`high` - slightly increased quality, larger\
+            \ file size</li>\n</ul>"
+          enum:
+          - low
+          - medium
+          - high
+          example: medium
+          type: string
+        repeat:
+          default: true
+          description: "Loop settings for gif files. Set to `true` to loop, `false`\
+            \ to play only once."
+          example: true
+          type: boolean
+        range:
+          $ref: '#/components/schemas/Range'
+        poster:
+          $ref: '#/components/schemas/Poster'
+        thumbnail:
+          $ref: '#/components/schemas/Thumbnail'
+        destinations:
+          additionalProperties: false
+          items:
+            $ref: '#/components/schemas/Destinations'
+          type: array
+      required:
+      - format
+      type: object
+    Size:
+      description: Set a custom size for a video or image. When using a custom size
+        omit the `resolution` and `aspectRatio`. Custom sizes must be divisible by
+        2 based on the encoder specifications.
+      example:
+        width: 1200
+        height: 800
+      properties:
+        width:
+          description: "Set a custom width for the video or image file. Value must\
+            \ be divisible by 2. Maximum video width is 1920px, maximum image width\
+            \ is 4096px."
+          example: 1200
+          maximum: 4096
+          minimum: 0
+          type: integer
+        height:
+          description: "Set a custom height for the video or image file. Value must\
+            \ be divisible by 2. Maximum video height is 1920px, maximum image height\
+            \ is 4096px."
+          example: 800
+          maximum: 4096
+          minimum: 0
+          type: integer
+      type: object
+    Range:
+      description: "Specify a time range to render, i.e. to render only a portion\
+        \ of a video or audio file. Omit this setting to  export the entire video.\
+        \ Range can also be used to render a frame at a specific time point - setting\
+        \ a range and output format as `jpg` will output a single frame image at the\
+        \ range `start` point."
+      example:
+        start: 3
+        length: 6
+      properties:
+        start:
+          description: "The point on the timeline, in seconds, to start the render\
+            \ from - i.e. start at second 3."
+          example: 3
+          format: float
+          minimum: 0
+          type: number
+        length:
+          description: The length of the portion of the video or audio to render -
+            i.e. render 6 seconds of the video.
+          example: 6
+          format: float
+          minimum: 0
+          type: number
+      type: object
+    Poster:
+      description: Generate a poster image for the video at a specific point from
+        the timeline. The poster image size will match the size of the output video.
+      example:
+        capture: 1
+      properties:
+        capture:
+          description: The point on the timeline in seconds to capture a single frame
+            to use as the poster image.
+          example: 1
+          type: number
+      required:
+      - capture
+      type: object
+    Thumbnail:
+      description: Generate a thumbnail image for the video or image at a specific
+        point from the timeline.
+      example:
+        capture: 1
+        scale: 0.3
+      properties:
+        capture:
+          description: The point on the timeline in seconds to capture a single frame
+            to use as the thumbnail image.
+          example: 1
+          type: number
+        scale:
+          description: Scale the thumbnail size to a fraction of the viewport size
+            - i.e. setting the scale to 0.5 will scale  the thumbnail to half the
+            size of the viewport.
+          example: 0.3
+          type: number
+      required:
+      - capture
+      - scale
+      type: object
+    Destinations:
+      anyOf:
+      - $ref: '#/components/schemas/ShotstackDestination'
+      - $ref: '#/components/schemas/MuxDestination'
+      description: "A destination is a location where output files can be sent to\
+        \ for serving or hosting. By default all rendered assets are automatically\
+        \ sent to the  [Shotstack hosting destination](https://shotstack.io/docs/guide/serving-assets/hosting).\
+        \ You can add other destinations to send assets to. The following destinations\
+        \ are available:\n  <ul>\n    <li><a href=\"#tocs_shotstackdestination\">DestinationShotstack</a></li>\n\
+        \    <li><a href=\"#tocs_muxdestination\">DestinationMux</a></li>\n  </ul>"
+      discriminator:
+        propertyName: destinations
+      type: object
+    ShotstackDestination:
+      description: Send rendered assets to the Shotstack hosting and CDN service.
+        This destination is enabled by default.
+      properties:
+        provider:
+          default: shotstack
+          description: The destination to send rendered assets to - set to `shotstack`
+            for Shotstack hosting and CDN.
+          example: shotstack
+          type: string
+        exclude:
+          default: false
+          description: Set to `true` to opt-out from the Shotstack hosting and CDN
+            service. All files must be downloaded within 24 hours of rendering.
+          example: false
+          type: boolean
+      required:
+      - provider
+      type: object
+    MuxDestination:
+      description: "Send rendered videos to the [Mux](https://www.mux.com/) video\
+        \ hosting and streaming service. Add the `mux` destination provider to send\
+        \ the output video to Mux. Mux credentials are required and added via the\
+        \ [dashboard](https://dashboard.shotstack.io/integrations/mux), not in the\
+        \ request."
+      properties:
+        provider:
+          default: mux
+          description: The destination to send rendered assets to - set to `mux` for
+            Mux.
+          example: mux
+          type: string
+        options:
+          $ref: '#/components/schemas/MuxDestinationOptions'
+      required:
+      - provider
+      type: object
+    MuxDestinationOptions:
+      description: Pass additional options to control how Mux processes video. Currently
+        supports playback policy option.
+      properties:
+        playbackPolicy:
+          description: "Sets the Mux `playback_policy` option. Value is an array of\
+            \ strings - use `public`, `signed`, or both."
+          items:
+            enum:
+            - public
+            - signed
+            type: string
+          type: array
+    Template:
+      description: "A template is a saved [Edit](#tocs_edit) than can be loaded and\
+        \ re-used."
+      example:
+        template:
+          output:
+            scaleTo: preview
+            thumbnail:
+              capture: 1
+              scale: 0.3
+            size:
+              width: 1200
+              height: 800
+            repeat: true
+            destinations:
+            - null
+            - null
+            format: mp4
+            fps: 25
+            range:
+              start: 3
+              length: 6
+            aspectRatio: 16:9
+            resolution: sd
+            poster:
+              capture: 1
+            quality: medium
+          disk: local
+          merge:
+          - find: NAME
+            replace: Jane
+          - find: NAME
+            replace: Jane
+          timeline:
+            soundtrack:
+              volume: 0.8008281904610115
+              src: https://s3-ap-northeast-1.amazonaws.com/my-bucket/music.mp3
+              effect: fadeIn
+            cache: true
+            fonts:
+            - src: https://s3-ap-northeast-1.amazonaws.com/my-bucket/open-sans.ttf
+            - src: https://s3-ap-northeast-1.amazonaws.com/my-bucket/open-sans.ttf
+            background: '#000000'
+            tracks:
+            - clips:
+              - fit: crop
+                filter: greyscale
+                transform:
+                  rotate:
+                    angle: 45
+                  flip:
+                    horizontal: true
+                    vertical: true
+                  skew:
+                    x: 0.5
+                    "y": 0.5
+                offset:
+                  x: 0.1
+                  "y": -0.2
+                effect: zoomIn
+                start: 2
+                length: 5
+                scale: 0
+                position: center
+                asset: null
+                opacity: 6.027456183070403
+                transition:
+                  in: fade
+                  out: fade
+              - fit: crop
+                filter: greyscale
+                transform:
+                  rotate:
+                    angle: 45
+                  flip:
+                    horizontal: true
+                    vertical: true
+                  skew:
+                    x: 0.5
+                    "y": 0.5
+                offset:
+                  x: 0.1
+                  "y": -0.2
+                effect: zoomIn
+                start: 2
+                length: 5
+                scale: 0
+                position: center
+                asset: null
+                opacity: 6.027456183070403
+                transition:
+                  in: fade
+                  out: fade
+            - clips:
+              - fit: crop
+                filter: greyscale
+                transform:
+                  rotate:
+                    angle: 45
+                  flip:
+                    horizontal: true
+                    vertical: true
+                  skew:
+                    x: 0.5
+                    "y": 0.5
+                offset:
+                  x: 0.1
+                  "y": -0.2
+                effect: zoomIn
+                start: 2
+                length: 5
+                scale: 0
+                position: center
+                asset: null
+                opacity: 6.027456183070403
+                transition:
+                  in: fade
+                  out: fade
+              - fit: crop
+                filter: greyscale
+                transform:
+                  rotate:
+                    angle: 45
+                  flip:
+                    horizontal: true
+                    vertical: true
+                  skew:
+                    x: 0.5
+                    "y": 0.5
+                offset:
+                  x: 0.1
+                  "y": -0.2
+                effect: zoomIn
+                start: 2
+                length: 5
+                scale: 0
+                position: center
+                asset: null
+                opacity: 6.027456183070403
+                transition:
+                  in: fade
+                  out: fade
+          callback: https://my-server.com/callback.php
+        name: My template
+      properties:
+        name:
+          description: The template name
+          example: My template
+          type: string
+        template:
+          $ref: '#/components/schemas/Edit'
+      required:
+      - name
+      type: object
+    TemplateRender:
+      description: Render a template by it's id and optional merge fields.
+      example:
+        merge:
+        - find: NAME
+          replace: Jane
+        - find: NAME
+          replace: Jane
+        id: f5493c17-d01f-445c-bb49-535fae65f219
+      properties:
+        id:
+          description: The id of the template to render in UUID format.
+          example: f5493c17-d01f-445c-bb49-535fae65f219
+          type: string
+        merge:
+          description: "An array of key/value pairs that provides an easy way to create\
+            \ templates with placeholders. The placeholders can be used to find and\
+            \ replace keys with values. For example you can search for the placeholder\
+            \ `{{NAME}}` and replace it with the value `Jane`. "
+          items:
+            $ref: '#/components/schemas/MergeField'
+          type: array
+      required:
+      - id
+      type: object
+    QueuedResponse:
+      description: "The response received after a [render request](#render-asset)\
+        \ or [template render](#render-template) is submitted. The render task is\
+        \ queued for rendering and a unique render id is returned."
+      example:
+        success: true
+        response:
+          id: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7
+          message: Render Successfully Queued
+        message: Created
+      properties:
+        success:
+          description: "`true` if successfully queued, else `false`."
+          example: true
+          type: boolean
+        message:
+          description: "`Created`, `Bad Request` or an error message."
+          example: Created
+          type: string
+        response:
+          $ref: '#/components/schemas/QueuedResponseData'
+      required:
+      - message
+      - response
+      - success
+      type: object
+    QueuedResponseData:
+      description: "The response data returned with the [QueuedResponse](#tocs_queuedresponse)."
+      example:
+        id: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7
+        message: Render Successfully Queued
+      properties:
+        message:
+          description: Success response message or error details.
+          example: Render Successfully Queued
+          type: string
+        id:
+          description: The id of the render task in UUID format.
+          example: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7
+          type: string
+      required:
+      - id
+      - message
+      type: object
+    RenderResponse:
+      description: "The response received after a [render status request](#get-render-status)\
+        \ is submitted. The response includes  details about status of a render and\
+        \ the output URL."
+      example:
+        success: true
+        response:
+          owner: 5ca6hu7s9k
+          thumbnail: https://shotstack-api-v1-output.s3-ap-southeast-2.amazonaws.com/5ca6hu7s9k/2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7-thumb.jpg
+          data:
+            output:
+              scaleTo: preview
+              thumbnail:
+                capture: 1
+                scale: 0.3
+              size:
+                width: 1200
+                height: 800
+              repeat: true
+              destinations:
+              - null
+              - null
+              format: mp4
+              fps: 25
+              range:
+                start: 3
+                length: 6
+              aspectRatio: 16:9
+              resolution: sd
+              poster:
+                capture: 1
+              quality: medium
+            disk: local
+            merge:
+            - find: NAME
+              replace: Jane
+            - find: NAME
+              replace: Jane
+            timeline:
+              soundtrack:
+                volume: 0.8008281904610115
+                src: https://s3-ap-northeast-1.amazonaws.com/my-bucket/music.mp3
+                effect: fadeIn
+              cache: true
+              fonts:
+              - src: https://s3-ap-northeast-1.amazonaws.com/my-bucket/open-sans.ttf
+              - src: https://s3-ap-northeast-1.amazonaws.com/my-bucket/open-sans.ttf
+              background: '#000000'
+              tracks:
+              - clips:
+                - fit: crop
+                  filter: greyscale
+                  transform:
+                    rotate:
+                      angle: 45
+                    flip:
+                      horizontal: true
+                      vertical: true
+                    skew:
+                      x: 0.5
+                      "y": 0.5
+                  offset:
+                    x: 0.1
+                    "y": -0.2
+                  effect: zoomIn
+                  start: 2
+                  length: 5
+                  scale: 0
+                  position: center
+                  asset: null
+                  opacity: 6.027456183070403
+                  transition:
+                    in: fade
+                    out: fade
+                - fit: crop
+                  filter: greyscale
+                  transform:
+                    rotate:
+                      angle: 45
+                    flip:
+                      horizontal: true
+                      vertical: true
+                    skew:
+                      x: 0.5
+                      "y": 0.5
+                  offset:
+                    x: 0.1
+                    "y": -0.2
+                  effect: zoomIn
+                  start: 2
+                  length: 5
+                  scale: 0
+                  position: center
+                  asset: null
+                  opacity: 6.027456183070403
+                  transition:
+                    in: fade
+                    out: fade
+              - clips:
+                - fit: crop
+                  filter: greyscale
+                  transform:
+                    rotate:
+                      angle: 45
+                    flip:
+                      horizontal: true
+                      vertical: true
+                    skew:
+                      x: 0.5
+                      "y": 0.5
+                  offset:
+                    x: 0.1
+                    "y": -0.2
+                  effect: zoomIn
+                  start: 2
+                  length: 5
+                  scale: 0
+                  position: center
+                  asset: null
+                  opacity: 6.027456183070403
+                  transition:
+                    in: fade
+                    out: fade
+                - fit: crop
+                  filter: greyscale
+                  transform:
+                    rotate:
+                      angle: 45
+                    flip:
+                      horizontal: true
+                      vertical: true
+                    skew:
+                      x: 0.5
+                      "y": 0.5
+                  offset:
+                    x: 0.1
+                    "y": -0.2
+                  effect: zoomIn
+                  start: 2
+                  length: 5
+                  scale: 0
+                  position: center
+                  asset: null
+                  opacity: 6.027456183070403
+                  transition:
+                    in: fade
+                    out: fade
+            callback: https://my-server.com/callback.php
+          created: 2020-10-30T09:42:29.446Z
+          error: ""
+          url: https://shotstack-api-v1-output.s3-ap-southeast-2.amazonaws.com/5ca6hu7s9k/2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7.mp4
+          renderTime: 9433.44
+          duration: 8.5
+          id: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7
+          plan: basic
+          poster: https://shotstack-api-v1-output.s3-ap-southeast-2.amazonaws.com/5ca6hu7s9k/2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7-poster.jpg
+          updated: 2020-10-30T09:42:39.168Z
+          status: done
+        message: OK
+      properties:
+        success:
+          description: "`true` if status available, else `false`."
+          example: true
+          type: boolean
+        message:
+          description: '`OK` or an error message.'
+          example: OK
+          type: string
+        response:
+          $ref: '#/components/schemas/RenderResponseData'
+      required:
+      - message
+      - response
+      - success
+      type: object
+    RenderResponseData:
+      description: "The response data returned with the [RenderResponse](#tocs_renderresponse)\
+        \ including status and URL."
+      example:
+        owner: 5ca6hu7s9k
+        thumbnail: https://shotstack-api-v1-output.s3-ap-southeast-2.amazonaws.com/5ca6hu7s9k/2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7-thumb.jpg
+        data:
+          output:
+            scaleTo: preview
+            thumbnail:
+              capture: 1
+              scale: 0.3
+            size:
+              width: 1200
+              height: 800
+            repeat: true
+            destinations:
+            - null
+            - null
+            format: mp4
+            fps: 25
+            range:
+              start: 3
+              length: 6
+            aspectRatio: 16:9
+            resolution: sd
+            poster:
+              capture: 1
+            quality: medium
+          disk: local
+          merge:
+          - find: NAME
+            replace: Jane
+          - find: NAME
+            replace: Jane
+          timeline:
+            soundtrack:
+              volume: 0.8008281904610115
+              src: https://s3-ap-northeast-1.amazonaws.com/my-bucket/music.mp3
+              effect: fadeIn
+            cache: true
+            fonts:
+            - src: https://s3-ap-northeast-1.amazonaws.com/my-bucket/open-sans.ttf
+            - src: https://s3-ap-northeast-1.amazonaws.com/my-bucket/open-sans.ttf
+            background: '#000000'
+            tracks:
+            - clips:
+              - fit: crop
+                filter: greyscale
+                transform:
+                  rotate:
+                    angle: 45
+                  flip:
+                    horizontal: true
+                    vertical: true
+                  skew:
+                    x: 0.5
+                    "y": 0.5
+                offset:
+                  x: 0.1
+                  "y": -0.2
+                effect: zoomIn
+                start: 2
+                length: 5
+                scale: 0
+                position: center
+                asset: null
+                opacity: 6.027456183070403
+                transition:
+                  in: fade
+                  out: fade
+              - fit: crop
+                filter: greyscale
+                transform:
+                  rotate:
+                    angle: 45
+                  flip:
+                    horizontal: true
+                    vertical: true
+                  skew:
+                    x: 0.5
+                    "y": 0.5
+                offset:
+                  x: 0.1
+                  "y": -0.2
+                effect: zoomIn
+                start: 2
+                length: 5
+                scale: 0
+                position: center
+                asset: null
+                opacity: 6.027456183070403
+                transition:
+                  in: fade
+                  out: fade
+            - clips:
+              - fit: crop
+                filter: greyscale
+                transform:
+                  rotate:
+                    angle: 45
+                  flip:
+                    horizontal: true
+                    vertical: true
+                  skew:
+                    x: 0.5
+                    "y": 0.5
+                offset:
+                  x: 0.1
+                  "y": -0.2
+                effect: zoomIn
+                start: 2
+                length: 5
+                scale: 0
+                position: center
+                asset: null
+                opacity: 6.027456183070403
+                transition:
+                  in: fade
+                  out: fade
+              - fit: crop
+                filter: greyscale
+                transform:
+                  rotate:
+                    angle: 45
+                  flip:
+                    horizontal: true
+                    vertical: true
+                  skew:
+                    x: 0.5
+                    "y": 0.5
+                offset:
+                  x: 0.1
+                  "y": -0.2
+                effect: zoomIn
+                start: 2
+                length: 5
+                scale: 0
+                position: center
+                asset: null
+                opacity: 6.027456183070403
+                transition:
+                  in: fade
+                  out: fade
+          callback: https://my-server.com/callback.php
+        created: 2020-10-30T09:42:29.446Z
+        error: ""
+        url: https://shotstack-api-v1-output.s3-ap-southeast-2.amazonaws.com/5ca6hu7s9k/2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7.mp4
+        renderTime: 9433.44
+        duration: 8.5
+        id: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7
+        plan: basic
+        poster: https://shotstack-api-v1-output.s3-ap-southeast-2.amazonaws.com/5ca6hu7s9k/2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7-poster.jpg
+        updated: 2020-10-30T09:42:39.168Z
+        status: done
+      properties:
+        id:
+          description: The id of the render task in UUID format.
+          example: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7
+          type: string
+        owner:
+          description: The owner id of the render task.
+          example: 5ca6hu7s9k
+          type: string
+        plan:
+          description: The customer subscription plan.
+          example: basic
+          type: string
+        status:
+          description: |-
+            The status of the render task. <ul>
+              <li>`queued` - render is queued waiting to be rendered</li>
+              <li>`fetching` - assets are being fetched</li>
+              <li>`rendering` - the asset is being rendered</li>
+              <li>`saving` - the final asset is being saved to storage</li>
+              <li>`done` - the asset is ready to be downloaded</li>
+              <li>`failed` - there was an error rendering the asset</li>
+            </ul>
+          enum:
+          - queued
+          - fetching
+          - rendering
+          - saving
+          - done
+          - failed
+          example: done
+          type: string
+        error:
+          description: "An error message, only displayed if an error occurred."
+          example: ""
+          type: string
+        duration:
+          description: The output video or audio length in seconds.
+          example: 8.5
+          type: number
+        renderTime:
+          description: The time taken to render the asset in milliseconds.
+          example: 9433.44
+          type: number
+        url:
+          description: The URL of the final asset. This will only be available if
+            status is done. This is a temporary URL and will be deleted after 24 hours.
+            By default all assets are copied to the Shotstack hosting and CDN destination.
+          example: https://shotstack-api-v1-output.s3-ap-southeast-2.amazonaws.com/5ca6hu7s9k/2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7.mp4
+          type: string
+        poster:
+          description: The URL of the poster image if requested. This will only be
+            available if status is done.
+          example: https://shotstack-api-v1-output.s3-ap-southeast-2.amazonaws.com/5ca6hu7s9k/2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7-poster.jpg
+          type: string
+        thumbnail:
+          description: The URL of the thumbnail image if requested. This will only
+            be available if status is done.
+          example: https://shotstack-api-v1-output.s3-ap-southeast-2.amazonaws.com/5ca6hu7s9k/2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7-thumb.jpg
+          type: string
+        data:
+          $ref: '#/components/schemas/Edit'
+        created:
+          description: The time the render task was initially queued.
+          example: 2020-10-30T09:42:29.446Z
+          type: string
+        updated:
+          description: The time the render status was last updated.
+          example: 2020-10-30T09:42:39.168Z
+          type: string
+      required:
+      - created
+      - data
+      - id
+      - owner
+      - status
+      - updated
+      type: object
+    TemplateResponse:
+      description: "The response received after a [template](#create-a-template) is\
+        \ submitted. The template is saved and a unique template id is returned."
+      example:
+        success: true
+        response:
+          id: f5493c17-d01f-445c-bb49-535fae65f219
+          message: Template Successfully Created
+        message: Created
+      properties:
+        success:
+          description: "`true` if successfully created, else `false`."
+          example: true
+          type: boolean
+        message:
+          description: "`Created`, `Bad Request` or an error message."
+          example: Created
+          type: string
+        response:
+          $ref: '#/components/schemas/TemplateResponseData'
+      required:
+      - message
+      - response
+      - success
+      type: object
+    TemplateResponseData:
+      description: "The response data returned with the [TemplateResponse](#tocs_templateresponse)."
+      example:
+        id: f5493c17-d01f-445c-bb49-535fae65f219
+        message: Template Successfully Created
+      properties:
+        message:
+          description: Success response message or error details.
+          example: Template Successfully Created
+          type: string
+        id:
+          description: The unique id of the template in UUID format.
+          example: f5493c17-d01f-445c-bb49-535fae65f219
+          type: string
+      required:
+      - id
+      - message
+      type: object
+    TemplateDataResponse:
+      description: The template data including the template name and Edit.
+      example:
+        success: true
+        response:
+          owner: 5ca6hu7s9k
+          template: "{\"$ref\":\"./definitions/edit.yaml\"}"
+          name: My template
+          id: f5493c17-d01f-445c-bb49-535fae65f219
+        message: OK
+      properties:
+        success:
+          description: "`true` if successfully created, else `false`."
+          example: true
+          type: boolean
+        message:
+          description: "`OK`, `Bad Request` or an error message."
+          example: OK
+          type: string
+        response:
+          $ref: '#/components/schemas/TemplateDataResponseData'
+      required:
+      - message
+      - response
+      - success
+      type: object
+    TemplateDataResponseData:
+      description: "The response data returned with the [TemplateDataResponse](#tocs_templatedataresponse)."
+      example:
+        owner: 5ca6hu7s9k
+        template: "{\"$ref\":\"./definitions/edit.yaml\"}"
+        name: My template
+        id: f5493c17-d01f-445c-bb49-535fae65f219
+      properties:
+        id:
+          description: The unique id of the template in UUID format.
+          example: f5493c17-d01f-445c-bb49-535fae65f219
+          type: string
+        name:
+          description: The template name.
+          example: My template
+          type: string
+        owner:
+          description: The owner id of the templates.
+          example: 5ca6hu7s9k
+          type: string
+        template:
+          description: "The [Edit](#tocs_edit) template."
+          example: "{\"$ref\":\"./definitions/edit.yaml\"}"
+          type: string
+      required:
+      - id
+      - name
+      - owner
+      - template
+      type: object
+    TemplateListResponse:
+      description: A list of previously saved templates.
+      example:
+        success: true
+        response:
+          owner: 5ca6hu7s9k
+          templates:
+          - created: 2022-06-10T12:50:21.455Z
+            name: My template
+            id: f5493c17-d01f-445c-bb49-535fae65f219
+            updated: 2022-06-22T08:24:30.168Z
+          - created: 2022-06-10T12:50:21.455Z
+            name: My template
+            id: f5493c17-d01f-445c-bb49-535fae65f219
+            updated: 2022-06-22T08:24:30.168Z
+        message: Created
+      properties:
+        success:
+          description: "`true` if successfully created, else `false`."
+          example: true
+          type: boolean
+        message:
+          description: "`Created`, `Bad Request` or an error message."
+          example: Created
+          type: string
+        response:
+          $ref: '#/components/schemas/TemplateListResponseData'
+      required:
+      - message
+      - response
+      - success
+      type: object
+    TemplateListResponseData:
+      description: "The response data returned with the [TemplateListResponse](#tocs_templatelistresponse)."
+      example:
+        owner: 5ca6hu7s9k
+        templates:
+        - created: 2022-06-10T12:50:21.455Z
+          name: My template
+          id: f5493c17-d01f-445c-bb49-535fae65f219
+          updated: 2022-06-22T08:24:30.168Z
+        - created: 2022-06-10T12:50:21.455Z
+          name: My template
+          id: f5493c17-d01f-445c-bb49-535fae65f219
+          updated: 2022-06-22T08:24:30.168Z
+      properties:
+        owner:
+          description: The owner id of the templates.
+          example: 5ca6hu7s9k
+          type: string
+        templates:
+          description: The list of templates.
+          items:
+            $ref: '#/components/schemas/TemplateListResponseItem'
+          type: array
+      required:
+      - owner
+      - templates
+      type: object
+    TemplateListResponseItem:
+      description: "The individual template item returned with the  [TemplateListResponseData](#tocs_templatelistresponsedata)\
+        \ templates list."
+      example:
+        created: 2022-06-10T12:50:21.455Z
+        name: My template
+        id: f5493c17-d01f-445c-bb49-535fae65f219
+        updated: 2022-06-22T08:24:30.168Z
+      properties:
+        id:
+          description: The unique id of the template in UUID format.
+          example: f5493c17-d01f-445c-bb49-535fae65f219
+          type: string
+        name:
+          description: The template name
+          example: My template
+          type: string
+        created:
+          description: The time the template was created.
+          example: 2022-06-10T12:50:21.455Z
+          type: string
+        updated:
+          description: The time the template was last updated.
+          example: 2022-06-22T08:24:30.168Z
+          type: string
+      required:
+      - created
+      - id
+      - name
+      - updated
+      type: object
+    ProbeResponse:
+      description: "The response received after a [probe request](#inspect-media)\
+        \ is submitted. The probe requests returns data from FFprobe formatted as\
+        \ JSON."
+      example:
+        success: true
+        response: "{}"
+        message: Created
+      properties:
+        success:
+          description: "`true` if media successfully read, else `false`."
+          example: true
+          type: boolean
+        message:
+          description: "`Created`, `Bad Request` or an error message."
+          example: Created
+          type: string
+        response:
+          description: The response from FFprobe in JSON format.
+          type: object
+      required:
+      - message
+      - response
+      - success
+      type: object
+    AssetResponse:
+      description: "The response returned by the Serve API [get asset](#get-asset)\
+        \ request. Includes details of a hosted video, image, audio file, thumbnail\
+        \ or poster image. The response follows the [json:api](https://jsonapi.org/)\
+        \ specification."
+      example:
+        data:
+          attributes:
+            owner: 5ca6hu7s9k
+            renderId: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7
+            filename: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7.mp4
+            providerId: a4482cbf-e321-42a2-ac8b-947d26886840
+            created: 2021-06-30T09:42:29.446Z
+            id: a4482cbf-e321-42a2-ac8b-947d26886840
+            region: au
+            updated: 2021-06-30T09:42:30.168Z
+            url: https://cdn.shotstack.io/au/v1/5ca6hu7s9k/2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7.mp4
+            status: ready
+          type: asset
+      properties:
+        data:
+          $ref: '#/components/schemas/AssetResponseData'
+      required:
+      - data
+      type: object
+    AssetRenderResponse:
+      description: "The response returned by the Serve API [get asset by render id](#get-asset-by-render-id)\
+        \ request. The response  is an array of asset resources, including video,\
+        \ image, audio, thumbnail and poster image. The response follows  the [json:api](https://jsonapi.org/)\
+        \ specification."
+      example:
+        data:
+        - attributes:
+            owner: 5ca6hu7s9k
+            renderId: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7
+            filename: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7.mp4
+            providerId: a4482cbf-e321-42a2-ac8b-947d26886840
+            created: 2021-06-30T09:42:29.446Z
+            id: a4482cbf-e321-42a2-ac8b-947d26886840
+            region: au
+            updated: 2021-06-30T09:42:30.168Z
+            url: https://cdn.shotstack.io/au/v1/5ca6hu7s9k/2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7.mp4
+            status: ready
+          type: asset
+        - attributes:
+            owner: 5ca6hu7s9k
+            renderId: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7
+            filename: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7.mp4
+            providerId: a4482cbf-e321-42a2-ac8b-947d26886840
+            created: 2021-06-30T09:42:29.446Z
+            id: a4482cbf-e321-42a2-ac8b-947d26886840
+            region: au
+            updated: 2021-06-30T09:42:30.168Z
+            url: https://cdn.shotstack.io/au/v1/5ca6hu7s9k/2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7.mp4
+            status: ready
+          type: asset
+      properties:
+        data:
+          description: An array of asset resources grouped by render id.
+          items:
+            $ref: '#/components/schemas/AssetResponseData'
+          type: array
+      required:
+      - data
+      type: object
+    AssetResponseData:
+      description: The type of resource (an asset) and attributes of the asset.
+      example:
+        attributes:
+          owner: 5ca6hu7s9k
+          renderId: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7
+          filename: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7.mp4
+          providerId: a4482cbf-e321-42a2-ac8b-947d26886840
+          created: 2021-06-30T09:42:29.446Z
+          id: a4482cbf-e321-42a2-ac8b-947d26886840
+          region: au
+          updated: 2021-06-30T09:42:30.168Z
+          url: https://cdn.shotstack.io/au/v1/5ca6hu7s9k/2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7.mp4
+          status: ready
+        type: asset
+      properties:
+        type:
+          description: "The type of resource, in this case it is an assets."
+          example: asset
+          type: string
+        attributes:
+          $ref: '#/components/schemas/AssetResponseAttributes'
+      required:
+      - attributes
+      - type
+      type: object
+    AssetResponseAttributes:
+      description: The list of asset attributes and their values.
+      example:
+        owner: 5ca6hu7s9k
+        renderId: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7
+        filename: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7.mp4
+        providerId: a4482cbf-e321-42a2-ac8b-947d26886840
+        created: 2021-06-30T09:42:29.446Z
+        id: a4482cbf-e321-42a2-ac8b-947d26886840
+        region: au
+        updated: 2021-06-30T09:42:30.168Z
+        url: https://cdn.shotstack.io/au/v1/5ca6hu7s9k/2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7.mp4
+        status: ready
+      properties:
+        id:
+          description: The unique id of the hosted asset in UUID format.
+          example: a4482cbf-e321-42a2-ac8b-947d26886840
+          type: string
+        owner:
+          description: The owner id of the render task.
+          example: 5ca6hu7s9k
+          type: string
+        region:
+          description: "The region the asset is hosted, currently only `au` (Australia)."
+          example: au
+          type: string
+        renderId:
+          description: The original render id that created the asset in UUID format.
+            Multiple assets can share the same render id.
+          example: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7
+          type: string
+        providerId:
+          description: "The third party id of an asset transferred to an external\
+            \ provider, i.e. Mux, YouTube or S3. If the provider is Shotstack, the\
+            \ providerID is the same as the asset id."
+          example: a4482cbf-e321-42a2-ac8b-947d26886840
+          type: string
+        filename:
+          description: The asset file name.
+          example: 2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7.mp4
+          type: string
+        url:
+          description: The asset file name.
+          example: https://cdn.shotstack.io/au/v1/5ca6hu7s9k/2abd5c11-0f3d-4c6d-ba20-235fc9b8e8b7.mp4
+          type: string
+        status:
+          description: |-
+            The status of the asset. <ul>
+              <li>`importing` - the asset is being copied to the hosting service</li>
+              <li>`ready` - the asset is ready to be served to users</li>
+              <li>`failed` - the asset failed to copy or delete</li>
+              <li>`deleted` - the asset has been deleted</li>
+            </ul>
+          enum:
+          - importing
+          - ready
+          - failed
+          - deleted
+          example: ready
+          type: string
+        created:
+          description: The time the asset was created.
+          example: 2021-06-30T09:42:29.446Z
+          type: string
+        updated:
+          description: The time the asset status was last updated.
+          example: 2021-06-30T09:42:30.168Z
+          type: string
+      required:
+      - created
+      - filename
+      - id
+      - owner
+      - status
+      - updated
+      type: object
+  securitySchemes:
+    DeveloperKey:
+      description: Set the **x-api-key** header with your provided key for the correct
+        environment (v1 or stage). Include the header in all calls to the API that
+        are secured with a key.
+      in: header
+      name: x-api-key
+      type: apiKey
