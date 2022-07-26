@@ -86,9 +86,12 @@ func (s *ProcessingQueue) ProcessQueue(editAPI EditAPIServicer) {
 		}
 
 		if s.currentQueue.InternalStatus == Saving {
-			// FIXME: Pass through Saving status at some point
-			s.currentQueue.Status = Done
-			s.currentQueue.InternalStatus = Done
+			if s.currentQueue.Data.Output.Destinations != nil {
+				go s.SendToDestinations(s.currentQueue.Data.Output.Destinations, s.currentQueue.FileName)
+			} else {
+				s.currentQueue.Status = Done
+				s.currentQueue.InternalStatus = Done
+			}
 		}
 
 		if s.currentQueue.InternalStatus == Failed || s.currentQueue.InternalStatus == Done {
@@ -99,6 +102,20 @@ func (s *ProcessingQueue) ProcessQueue(editAPI EditAPIServicer) {
 	go time.AfterFunc(1*time.Second, func() {
 		s.ProcessQueue(editAPI)
 	})
+}
+
+func (s *ProcessingQueue) SendToDestinations(destinations []Destinations, fileName string) {
+	for _, destination := range destinations {
+		switch destination.Provider {
+		case "youtube":
+			fmt.Println("sending to youtube", fileName)
+		default:
+			fmt.Println("Destination not handled", destination.Provider)
+		}
+	}
+
+	s.currentQueue.Status = Done
+	s.currentQueue.InternalStatus = Done
 }
 
 func (s *ProcessingQueue) ExecuteFFMpeg(params []string) {
