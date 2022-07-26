@@ -84,7 +84,7 @@ At the end of the road this section should either disappear or be full of `Yes` 
 | Output | range | Not yet |  |
 | Output | poster | Not yet |  |
 | Output | thumbnail | Not yet |  |
-| Output | destinations | Not yet |  |
+| Output | destinations | Partial 🛠 | `shotstack` won't be implemented. |
 
 #### Endpoint implementation
 
