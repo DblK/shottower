@@ -26,58 +26,40 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package openapi
 
-import "golang.org/x/exp/slices"
+// YoutubeDestination - Send rendered videos to [Youtube](https://www.youtube.com/) video hosting and streaming service. Add the `youtube` destination provider to send the output video to Youtube. Youtube credentials are required and added inside Options for now in the request.
+type YoutubeDestination struct {
 
-// Destinations - A destination is a location where output files can be sent to for serving or hosting. By default all rendered assets are automatically sent to the  [Shotstack hosting destination](https://shotstack.io/docs/guide/serving-assets/hosting). You can add other destinations to send assets to. The following destinations are available:   <ul>     <li><a href=\"#tocs_shotstackdestination\">DestinationShotstack</a></li>     <li><a href=\"#tocs_muxdestination\">DestinationMux</a></li>   </ul>
-type Destinations struct {
-
-	// The destination to send rendered assets to - set to `mux` for Mux.
+	// The destination to send rendered assets to - set to `youtube` for Youtube.
 	Provider string `json:"provider"`
 
-	// Set to `true` to opt-out from the Shotstack hosting and CDN service. All files must be downloaded within 24 hours of rendering.
-	Exclude bool `json:"exclude,omitempty"`
-
-	Options MuxDestinationOptions `json:"options,omitempty"`
+	Options YoutubeDestinationOptions `json:"options,omitempty"`
 }
 
-func (s *Destinations) checkEnumValues() error {
-	providerValues := []string{"shotstack", "mux", "youtube"}
-	if s.Provider != "" && !slices.Contains(providerValues, s.Provider) {
-		return &EnumError{Schema: "Destinations", Field: "Effect", Value: s.Provider}
-	}
-
-	return nil
-}
-
-// AssertDestinationsRequired checks if the required fields are not zero-ed
-func AssertDestinationsRequired(obj *Destinations) error {
+// AssertYoutubeDestinationRequired checks if the required fields are not zero-ed
+func AssertYoutubeDestinationRequired(obj YoutubeDestination) error {
 	elements := map[string]interface{}{
 		"provider": obj.Provider,
 	}
 	for name, el := range elements {
 		if isZero := IsZeroValue(el); isZero {
-			return &RequiredError{Schema: "Destination", Field: name}
+			return &RequiredError{Field: name}
 		}
 	}
 
-	if err := obj.checkEnumValues(); err != nil {
-		return err
-	}
-
-	if err := AssertMuxDestinationOptionsRequired(obj.Options); err != nil {
+	if err := AssertYoutubeDestinationOptionsRequired(obj.Options); err != nil {
 		return err
 	}
 	return nil
 }
 
-// AssertRecurseDestinationsRequired recursively checks if required fields are not zero-ed in a nested slice.
-// Accepts only nested slice of Destinations (e.g. [][]Destinations), otherwise ErrTypeAssertionError is thrown.
-func AssertRecurseDestinationsRequired(objSlice interface{}) error {
+// AssertRecurseYoutubeDestinationRequired recursively checks if required fields are not zero-ed in a nested slice.
+// Accepts only nested slice of YoutubeDestination (e.g. [][]YoutubeDestination), otherwise ErrTypeAssertionError is thrown.
+func AssertRecurseYoutubeDestinationRequired(objSlice interface{}) error {
 	return AssertRecurseInterfaceRequired(objSlice, func(obj interface{}) error {
-		aDestinations, ok := obj.(Destinations)
+		aYoutubeDestination, ok := obj.(YoutubeDestination)
 		if !ok {
 			return ErrTypeAssertionError
 		}
-		return AssertDestinationsRequired(&aDestinations)
+		return AssertYoutubeDestinationRequired(aYoutubeDestination)
 	})
 }
