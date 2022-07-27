@@ -35,7 +35,7 @@ If you would like to sponsor features, bugs or prioritization, reach out to one 
 ## Features (Basic + Exclusive 😎)
 
 * "Basic" (`Track`, `Clip`, `VideoAsset`, ...) support of Shotstack's features (See bellow for progress)
-    * Use only the `stage` endpoint value until all features are implemented (See #1 for multiple endpoint handling)
+    * Use only the `stage` endpoint value until all features are implemented (See https://github.com/DblK/shottower/issues/1 for multiple endpoint handling)
 * 😎 Possible to burn subtitle into video clip
 * 😎 Allow to use local file from `url` filed (`file:///Users/dblk/clips/my_asset`)
 * 😎 Add an endpoint `/dl/renders/:id` to download renders (instead of cdn/s3)
