@@ -94,6 +94,15 @@ curl -d '{
 -X POST http://0.0.0.0:4000/stage/render
 ```
 
+## cURL command for the status
+From the id given by the previous command:
+
+```sh
+curl -X GET http://0.0.0.0:4000/stage/render/d2b46ed6-998a-4d6b-9d91-b8cf0193a655 \
+-H 'Accept: application/json' \
+  -H 'x-api-key: freeKey'
+```
+Then you should have the `url` property to know where to download the render.
 ## cURL command for downloading renders
 
 ```sh
