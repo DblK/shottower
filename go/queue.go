@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"net/url"
 	"os/exec"
+	"path/filepath"
 	"time"
 )
 
@@ -205,7 +206,7 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 }
 
 func (s *ProcessingQueue) DownloadFile(url string) (string, error) {
-	file, err := ioutil.TempFile("", "asset*")
+	file, err := ioutil.TempFile("", "asset*"+filepath.Ext(url))
 	if err != nil {
 		fmt.Println("Error temp file", err)
 		return "", err
