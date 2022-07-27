@@ -26,13 +26,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package openapi
 
-import "github.com/creasty/defaults"
+import (
+	"github.com/creasty/defaults"
+)
 
 // Subtitle - Subtitle allow to burn a specific subtitle into the video
 type Subtitle struct {
 
 	// Index of the subtitle stream (Default to 0).
 	Index int `json:"index,omitempty" default:"0"`
+}
+
+func NewSubtitle(m map[string]interface{}) *Subtitle {
+	subtitle := &Subtitle{}
+
+	if m["index"] != nil {
+		subtitle.Index = m["index"].(int)
+	}
+	return subtitle
 }
 
 func (s *Subtitle) checkEnumValues() error {

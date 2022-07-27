@@ -26,155 +26,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package openapi
 
-import (
-	"github.com/creasty/defaults"
-	"golang.org/x/exp/slices"
-)
+import "reflect"
 
-// Asset - The type of asset to display for the duration of this Clip. Value     must be one of:       <ul>         <li><a href=\"#tocs_videoasset\">VideoAsset</a></li>         <li><a href=\"#tocs_imageasset\">ImageAsset</a></li>         <li><a href=\"#tocs_titleasset\">TitleAsset</a></li>         <li><a href=\"#tocs_HTMLAsset\">HTMLAsset</a></li>         <li><a href=\"#tocs_audioasset\">AudioAsset</a></li>         <li><a href=\"#tocs_lumaasset\">LumaAsset</a></li>       </ul>
-type Asset struct {
-
-	// The type of asset - set to `luma` for luma mattes.
-	Type string `json:"type"`
-
-	// The luma matte source URL. The URL must be publicly accessible or include credentials.
-	Src string `json:"src,omitempty"`
-
-	// The start trim point of the luma matte clip, in seconds (defaults to 0). Videos will start from the in trim point. A luma matte video will play until the file ends or the Clip length is reached.
-	Trim float32 `json:"trim,omitempty" default:"0"`
-
-	// Set the volume for the audio clip between 0 and 1 where 0 is muted and 1 is full volume (defaults to 1).
-	Volume float32 `json:"volume,omitempty" default:"1"`
-
-	Crop *Crop `json:"crop,omitempty"`
-
-	// The title text string - i.e. \"My Title\".
-	Text string `json:"text,omitempty"`
-
-	// Uses a preset to apply font properties and styling to the title. <ul>   <li>`minimal`</li>   <li>`blockbuster`</li>   <li>`vogue`</li>   <li>`sketchy`</li>   <li>`skinny`</li>   <li>`chunk`</li>   <li>`chunkLight`</li>   <li>`marker`</li>   <li>`future`</li>   <li>`subtitle`</li> </ul>
-	Style string `json:"style,omitempty"`
-
-	// Set the text color using hexadecimal color notation. Transparency is supported by setting the first two characters of the hex string (opposite to HTML),  i.e. #80ffffff will be white with  50% transparency.
-	Color string `json:"color,omitempty"`
-
-	// Set the relative size of the text using predefined sizes from xx-small to xx-large. <ul>   <li>`xx-small`</li>   <li>`x-small`</li>   <li>`small`</li>   <li>`medium`</li>   <li>`large`</li>   <li>`x-large`</li>   <li>`xx-large`</li> </ul>
-	Size string `json:"size,omitempty"`
-
-	// Apply a background color behind the HTML bounding box using. Set the text color using hexadecimal  color notation. Transparency is supported by setting the first two characters of the hex string  (opposite to HTML), i.e. #80ffffff will be white with 50% transparency.
-	Background string `json:"background,omitempty"`
-
-	// Place the HTML in one of nine predefined positions within the HTML area. <ul>   <li>`top` - top (center)</li>   <li>`topRight` - top right</li>   <li>`right` - right (center)</li>   <li>`bottomRight` - bottom right</li>   <li>`bottom` - bottom (center)</li>   <li>`bottomLeft` - bottom left</li>   <li>`left` - left (center)</li>   <li>`topLeft` - top left</li>   <li>`center` - center</li> </ul>
-	Position string `json:"position,omitempty"`
-
-	Offset *Offset `json:"offset,omitempty"`
-
-	// The HTML text string. See list of [supported HTML tags](https://shotstack.io/docs/guide/architecting-an-application/html-support#supported-html-tags).
-	HTML string `json:"html,omitempty"`
-
-	// The CSS text string to apply styling to the HTML. See list of  [support CSS properties](https://shotstack.io/docs/guide/architecting-an-application/html-support#supported-css-properties).
-	CSS string `json:"css,omitempty"`
-
-	// Set the width of the HTML asset bounding box in pixels. Text will wrap to fill the bounding box.
-	Width int32 `json:"width,omitempty"`
-
-	// Set the width of the HTML asset bounding box in pixels. Text and elements will be masked if they exceed the  height of the bounding box.
-	Height int32 `json:"height,omitempty"`
-
-	// The effect to apply to the audio asset <ul>   <li>`fadeIn` - fade volume in only</li>   <li>`fadeOut` - fade volume out only</li>   <li>`fadeInFadeOut` - fade volume in and out</li> </ul>
-	Effect string `json:"effect,omitempty"`
-
-	Subtitle *Subtitle `json:"subtitle,omitempty"`
-}
-
-func (s *Asset) checkEnumValues() error {
-	styleValues := []string{"minimal", "blockbuster", "vogue", "sketchy", "skinny", "chunk", "chunkLight", "marker", "future", "subtitle"}
-	if s.Style != "" && !slices.Contains(styleValues, s.Style) {
-		return &EnumError{Schema: "Asset", Field: "Style", Value: s.Style}
-	}
-
-	sizeValues := []string{"xx-small", "x-small", "small", "medium", "large", "x-large", "xx-large"}
-	if s.Size != "" && !slices.Contains(sizeValues, s.Size) {
-		return &EnumError{Schema: "Asset", Field: "Size", Value: s.Size}
-	}
-
-	positionValues := []string{"top", "topRight", "right", "bottomRight", "bottom", "bottomLeft", "left", "topLeft", "center"}
-	if s.Position != "" && !slices.Contains(positionValues, s.Position) {
-		return &EnumError{Schema: "Asset", Field: "Position", Value: s.Position}
-	}
-
-	effectValues := []string{"fadeIn", "fadeOut", "fadeInFadeOut"}
-	if s.Effect != "" && !slices.Contains(effectValues, s.Effect) {
-		return &EnumError{Schema: "Asset", Field: "Effect", Value: s.Effect}
+func NewAsset(typeAsset string, obj map[string]interface{}) interface{} {
+	switch typeAsset {
+	case "video":
+		return NewVideoAsset(obj)
 	}
 
 	return nil
 }
 
 // AssertAssetRequired checks if the required fields are not zero-ed
-func AssertAssetRequired(obj *Asset) error {
-	elements := map[string]interface{}{
-		"type": obj.Type,
-	}
-	for name, el := range elements {
-		if isZero := IsZeroValue(el); isZero {
-			return &RequiredError{Schema: "Asset", Field: name}
-		}
-	}
-
-	if err := defaults.Set(obj); err != nil {
-		panic(err)
-	}
-
-	if err := obj.checkEnumValues(); err != nil {
-		return err
-	}
-
-	// Check mandatory field based on type
-	// https://shotstack.io/docs/api
-	switch obj.Type {
-	case "video":
-		if obj.Src == "" {
-			return &RequiredError{Schema: "Asset", Field: "src"}
-		}
-	case "image":
-		if obj.Src == "" {
-			return &RequiredError{Schema: "Asset", Field: "src"}
-		}
-	case "title":
-		if obj.Text == "" {
-			return &RequiredError{Schema: "Asset", Field: "text"}
-		}
-	case "html":
-		if obj.HTML == "" {
-			return &RequiredError{Schema: "Asset", Field: "html"}
-		}
-	case "audio":
-		if obj.Src == "" {
-			return &RequiredError{Schema: "Asset", Field: "src"}
-		}
-	case "luma":
-		if obj.Src == "" {
-			return &RequiredError{Schema: "Asset", Field: "src"}
-		}
-	}
-
-	if err := AssertCropRequired(obj.Crop); err != nil {
-		return err
-	}
-	if err := AssertOffsetRequired(obj.Offset); err != nil {
-		return err
+func AssertAssetRequired(obj interface{}) error {
+	var typeAsset = reflect.TypeOf(obj).String()
+	switch typeAsset {
+	case "*openapi.VideoAsset":
+		return AssertVideoAssetRequired(obj.(VideoAsset))
 	}
 	return nil
-}
-
-// AssertRecurseAssetRequired recursively checks if required fields are not zero-ed in a nested slice.
-// Accepts only nested slice of Asset (e.g. [][]Asset), otherwise ErrTypeAssertionError is thrown.
-func AssertRecurseAssetRequired(objSlice interface{}) error {
-	return AssertRecurseInterfaceRequired(objSlice, func(obj interface{}) error {
-		aAsset, ok := obj.(Asset)
-		if !ok {
-			return ErrTypeAssertionError
-		}
-		return AssertAssetRequired(&aAsset)
-	})
 }
