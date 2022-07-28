@@ -557,10 +557,6 @@ func (s *FFMPEG) ToString() []string {
 	parameters = append(parameters, "-i")
 	parameters = append(parameters, s.GenerateBackground())
 
-	// Add FPS output
-	parameters = append(parameters, "-r")
-	parameters = append(parameters, cast.ToString(s.fps))
-
 	// Handle filter complex
 	parameters = append(parameters, "-filter_complex")
 
@@ -644,6 +640,10 @@ func (s *FFMPEG) ToString() []string {
 	if err != nil {
 		return make([]string, 0)
 	}
+
+	// Add FPS output
+	parameters = append(parameters, "-r")
+	parameters = append(parameters, cast.ToString(s.fps))
 
 	// FIXME: Deprecated field (fps_mode??)
 	parameters = append(parameters, "-vsync") // https://stackoverflow.com/questions/18064604/frame-rate-very-high-for-a-muxer-not-efficiently-supporting-it

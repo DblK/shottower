@@ -26,6 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package openapi
 
+import "github.com/spf13/cast"
+
 // SkewTransformation - Skew a clip so its edges are sheared at an angle. Use values between 0 and 3. Over 3 the clip will be skewed almost flat.
 type SkewTransformation struct {
 
@@ -34,6 +36,18 @@ type SkewTransformation struct {
 
 	// Skew the clip along it's y axis.
 	Y float32 `json:"y,omitempty"`
+}
+
+func NewSkewTransformation(m map[string]interface{}) *SkewTransformation {
+	transform := &SkewTransformation{}
+
+	if m["x"] != nil {
+		transform.X = cast.ToFloat32(m["x"].(float64))
+	}
+	if m["y"] != nil {
+		transform.X = cast.ToFloat32(m["x"].(float64))
+	}
+	return transform
 }
 
 func (s *SkewTransformation) checkEnumValues() error {

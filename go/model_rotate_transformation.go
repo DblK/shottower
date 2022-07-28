@@ -26,11 +26,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package openapi
 
+import "github.com/spf13/cast"
+
 // RotateTransformation - Rotate a clip by the specified angle in degrees. Rotation origin is set based on the clips `position`.
 type RotateTransformation struct {
 
 	// The angle to rotate the clip. Can be 0 to 360, or 0 to -360. Using a positive number rotates the clip clockwise, negative numbers counter-clockwise.
 	Angle int32 `json:"angle,omitempty"`
+}
+
+func NewRotateTransformation(m map[string]interface{}) *RotateTransformation {
+	transform := &RotateTransformation{}
+
+	if m["angle"] != nil {
+		transform.Angle = cast.ToInt32(m["angle"].(float64))
+	}
+	return transform
 }
 
 func (s *RotateTransformation) checkEnumValues() error {

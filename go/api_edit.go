@@ -224,37 +224,14 @@ func (c *EditAPIController) PostRender(w http.ResponseWriter, r *http.Request) {
 
 	var min float32 = 99999999999
 	var max float32
-	for tIndex, track := range editParam.Timeline.Tracks {
-		for cIndex, clip := range track.Clips {
+	for _, track := range editParam.Timeline.Tracks {
+		for _, clip := range track.Clips {
 			// Find min and max timing for the timeline
 			if clip.Start < min {
 				min = clip.Start
 			}
 			if clip.Start+clip.Length > max {
 				max = clip.Start + clip.Length
-			}
-
-			// Convert clip Asset type
-			switch clip.Asset.Type {
-			case "video":
-				var videoAsset = &VideoAsset{
-					Type:     clip.Asset.Type,
-					Src:      clip.Asset.Src,
-					Trim:     clip.Asset.Trim,
-					Volume:   clip.Asset.Volume,
-					Crop:     clip.Asset.Crop,
-					Subtitle: clip.Asset.Subtitle,
-				}
-				editParam.Timeline.Tracks[tIndex].Clips[cIndex].TypedAsset = *videoAsset
-			case "image":
-				var imageAsset = &ImageAsset{
-					Type: clip.Asset.Type,
-					Src:  clip.Asset.Src,
-					Crop: clip.Asset.Crop,
-				}
-				editParam.Timeline.Tracks[tIndex].Clips[cIndex].TypedAsset = *imageAsset
-			default:
-				fmt.Println("Asset type not handled!!", clip.Asset.Type)
 			}
 		}
 	}

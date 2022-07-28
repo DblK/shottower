@@ -26,6 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package openapi
 
+import "github.com/spf13/cast"
+
 // Thumbnail - Generate a thumbnail image for the video or image at a specific point from the timeline.
 type Thumbnail struct {
 
@@ -34,6 +36,18 @@ type Thumbnail struct {
 
 	// Scale the thumbnail size to a fraction of the viewport size - i.e. setting the scale to 0.5 will scale  the thumbnail to half the size of the viewport.
 	Scale float32 `json:"scale"`
+}
+
+func NewThumbnail(m map[string]interface{}) *Thumbnail {
+	thumbnail := &Thumbnail{}
+
+	if m["capture"] != nil {
+		thumbnail.Capture = cast.ToFloat32(m["capture"].(float64))
+	}
+	if m["scale"] != nil {
+		thumbnail.Scale = cast.ToFloat32(m["scale"].(float64))
+	}
+	return thumbnail
 }
 
 func (s *Thumbnail) checkEnumValues() error {

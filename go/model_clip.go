@@ -27,18 +27,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package openapi
 
 import (
+	"encoding/json"
 	"fmt"
 
+	"github.com/spf13/cast"
 	"golang.org/x/exp/slices"
 )
 
 // Clip - A clip is a container for a specific type of asset, i.e. a title, image, video, audio or html. You use a Clip to define when an asset will display on the timeline, how long it will play for and transitions, filters and effects to apply to it.
 type Clip struct {
-	Asset Asset `json:"asset"`
+	Asset interface{} `json:"asset"`
 
-	TypedAsset interface{} `json:"-"`
-
-	// The start position of the Clip on the timeline, in seconds.
+	// The s{tart position of the Clip on the timeline, in seconds.
 	Start float32 `json:"start"`
 
 	// The length, in seconds, the Clip should play for.
@@ -67,6 +67,64 @@ type Clip struct {
 	Opacity float32 `json:"opacity,omitempty"`
 
 	Transform *Transformation `json:"transform,omitempty"`
+}
+
+func NewClip(data map[string]interface{}, asset interface{}) *Clip {
+	clip := &Clip{
+		Asset: asset,
+	}
+
+	if data["start"] != nil {
+		clip.Start = cast.ToFloat32(data["start"].(float64))
+	}
+	if data["length"] != nil {
+		clip.Length = cast.ToFloat32(data["length"].(float64))
+	}
+	if data["fit"] != nil {
+		clip.Fit = data["fit"].(string)
+	}
+	if data["scale"] != nil {
+		scale := cast.ToFloat32(data["scale"].(float64))
+		clip.Scale = &scale
+	}
+	if data["position"] != nil {
+		clip.Position = data["position"].(string)
+	}
+	if data["offset"] != nil {
+		clip.Offset = NewOffset(data["offset"].(map[string]interface{}))
+	}
+	if data["transition"] != nil {
+		clip.Transition = NewTransition(data["transition"].(map[string]interface{}))
+	}
+	if data["effect"] != nil {
+		clip.Effect = data["effect"].(string)
+	}
+	if data["filter"] != nil {
+		clip.Filter = data["filter"].(string)
+	}
+	if data["opacity"] != nil {
+		clip.Opacity = cast.ToFloat32(data["opacity"].(float64))
+	}
+	if data["transform"] != nil {
+		clip.Transform = NewTransformation(data["transform"].(map[string]interface{}))
+	}
+
+	return clip
+}
+
+func (s *Clip) UnmarshalJSON(data []byte) error {
+	var obj map[string]interface{}
+	err := json.Unmarshal(data, &obj)
+	if err != nil {
+		return err
+	}
+
+	var typeAsset = obj["asset"].(map[string]interface{})["type"].(string)
+
+	asset := NewAsset(typeAsset, obj["asset"].(map[string]interface{}))
+
+	*s = *NewClip(obj, asset)
+	return nil
 }
 
 func (s *Clip) checkEnumValues() error {
@@ -98,9 +156,10 @@ func (s *Clip) ToFFMPEG(FFMPEGCommand FFMPEGCommand, sourceClip int, trackNumber
 	var audioEffects []string
 	var handled bool
 
-	switch s.Asset.Type {
-	case "video":
-		var currentAsset = s.TypedAsset.(VideoAsset)
+	var typeAsset = GetAssetType(s.Asset)
+	switch typeAsset { // nolint:exhaustive
+	case VideoAssetType:
+		var currentAsset = s.Asset.(*VideoAsset)
 
 		if currentAsset.Subtitle != nil {
 			effects = append(effects, FFMPEGCommand.ClipSubtitleBurn(sourceClip, trackNumber, currentClip, currentAsset.Subtitle.Index))
@@ -120,11 +179,11 @@ func (s *Clip) ToFFMPEG(FFMPEGCommand FFMPEGCommand, sourceClip int, trackNumber
 			audioEffects = append(audioEffects, FFMPEGCommand.ClipAudioDelay(sourceClip, trackNumber, currentClip, s.Start*1000))
 		}
 
-	case "image":
+	case ImageAssetType:
 		handled = true
 		effects = append(effects, FFMPEGCommand.ClipImage(sourceClip, trackNumber, currentClip, 0, s.Length))
 	default:
-		fmt.Println("Type not handled for converting to FFMPEG", s.Asset.Type)
+		fmt.Println("Type not handled for converting to FFMPEG", typeAsset.String())
 	}
 
 	if !handled {

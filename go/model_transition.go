@@ -38,6 +38,18 @@ type Transition struct {
 	Out string `json:"out,omitempty"`
 }
 
+func NewTransition(m map[string]interface{}) *Transition {
+	transition := &Transition{}
+
+	if m["in"] != nil {
+		transition.In = m["in"].(string)
+	}
+	if m["out"] != nil {
+		transition.Out = m["out"].(string)
+	}
+	return transition
+}
+
 func (s *Transition) checkEnumValues() error {
 	inValues := []string{"fade", "reveal", "wipeLeft", "wipeRight", "slideLeft", "slideRight", "slideUp", "slideDown", "carouselLeft", "carouselRight", "carouselUp", "carouselDown", "shuffleTopRight", "shuffleRightTop", "shuffleRightBottom", "shuffleBottomRight", "shuffleBottomLeft", "shuffleLeftBottom", "shuffleLeftTop", "zoom"}
 	if s.In != "" && !slices.Contains(inValues, s.In) {

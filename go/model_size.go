@@ -28,6 +28,8 @@ package openapi
 
 import (
 	"math"
+
+	"github.com/spf13/cast"
 )
 
 // Size - Set a custom size for a video or image. When using a custom size omit the `resolution` and `aspectRatio`. Custom sizes must be divisible by 2 based on the encoder specifications.
@@ -38,6 +40,20 @@ type Size struct {
 
 	// Set a custom height for the video or image file. Value must be divisible by 2. Maximum video height is 1920px, maximum image height is 4096px.
 	Height *int32 `json:"height,omitempty"`
+}
+
+func NewSize(m map[string]interface{}) *Size {
+	size := &Size{}
+
+	if m["width"] != nil {
+		width := cast.ToInt32(m["width"].(float64))
+		size.Width = &width
+	}
+	if m["height"] != nil {
+		height := cast.ToInt32(m["height"].(float64))
+		size.Height = &height
+	}
+	return size
 }
 
 func (s *Size) checkEnumValues() error {
