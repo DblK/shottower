@@ -35,8 +35,20 @@ type YoutubeDestination struct {
 	Options YoutubeDestinationOptions `json:"options,omitempty"`
 }
 
+func NewYoutubeDestination(obj map[string]interface{}) *YoutubeDestination {
+	destination := &YoutubeDestination{
+		Provider: obj["provider"].(string),
+	}
+
+	if obj["options"] != nil {
+		destination.Options = *NewYoutubeDestinationOptions(obj["options"].(map[string]interface{}))
+	}
+
+	return destination
+}
+
 // AssertYoutubeDestinationRequired checks if the required fields are not zero-ed
-func AssertYoutubeDestinationRequired(obj YoutubeDestination) error {
+func AssertYoutubeDestinationRequired(obj *YoutubeDestination) error {
 	elements := map[string]interface{}{
 		"provider": obj.Provider,
 	}
@@ -60,6 +72,6 @@ func AssertRecurseYoutubeDestinationRequired(objSlice interface{}) error {
 		if !ok {
 			return ErrTypeAssertionError
 		}
-		return AssertYoutubeDestinationRequired(aYoutubeDestination)
+		return AssertYoutubeDestinationRequired(&aYoutubeDestination)
 	})
 }

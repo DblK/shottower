@@ -105,13 +105,19 @@ func (s *ProcessingQueue) ProcessQueue(editAPI EditAPIServicer) {
 	})
 }
 
-func (s *ProcessingQueue) SendToDestinations(destinations []Destinations, fileName string) {
+func (s *ProcessingQueue) SendToDestinations(destinations []interface{}, fileName string) {
 	for _, destination := range destinations {
-		switch destination.Provider {
-		case "youtube":
+		provider := GetDestinationProvider(destination)
+		switch provider { // nolint:exhaustive
+		case YoutubeDestinationType:
 			fmt.Println("sending to youtube", fileName)
+			fmt.Println(destination)
+		case MuxDestinationType:
+			// TODO: Do it later
+			// fmt.Println("sending to mux", fileName)
+			// fmt.Println(destination)
 		default:
-			fmt.Println("Destination not handled", destination.Provider)
+			fmt.Println("Destination not handled", provider)
 		}
 	}
 

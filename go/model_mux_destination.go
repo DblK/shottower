@@ -35,20 +35,20 @@ type MuxDestination struct {
 	Options MuxDestinationOptions `json:"options,omitempty"`
 }
 
-func NewMuxDestination(obj map[string]interface{}) interface{} {
+func NewMuxDestination(obj map[string]interface{}) *MuxDestination {
 	destination := &MuxDestination{
 		Provider: obj["provider"].(string),
 	}
 
 	if obj["options"] != nil {
-		destination.Options = obj["options"].(MuxDestinationOptions)
+		destination.Options = *NewMuxDestinationOptions(obj["options"].(map[string]interface{}))
 	}
 
 	return destination
 }
 
 // AssertMuxDestinationRequired checks if the required fields are not zero-ed
-func AssertMuxDestinationRequired(obj MuxDestination) error {
+func AssertMuxDestinationRequired(obj *MuxDestination) error {
 	elements := map[string]interface{}{
 		"provider": obj.Provider,
 	}
@@ -72,6 +72,6 @@ func AssertRecurseMuxDestinationRequired(objSlice interface{}) error {
 		if !ok {
 			return ErrTypeAssertionError
 		}
-		return AssertMuxDestinationRequired(aMuxDestination)
+		return AssertMuxDestinationRequired(&aMuxDestination)
 	})
 }

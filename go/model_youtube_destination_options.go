@@ -39,6 +39,22 @@ type YoutubeDestinationOptions struct {
 	Privacy string `json:"privacy,omitempty"`
 }
 
+func NewYoutubeDestinationOptions(obj map[string]interface{}) *YoutubeDestinationOptions {
+	options := &YoutubeDestinationOptions{}
+
+	if obj["title"] != nil {
+		options.Title = obj["title"].(string)
+	}
+	if obj["description"] != nil {
+		options.Description = obj["description"].(string)
+	}
+	if obj["privacy"] != nil {
+		options.Privacy = obj["privacy"].(string)
+	}
+
+	return options
+}
+
 // AssertYoutubeDestinationOptionsRequired checks if the required fields are not zero-ed
 func AssertYoutubeDestinationOptionsRequired(obj YoutubeDestinationOptions) error {
 	return nil

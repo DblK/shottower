@@ -33,6 +33,19 @@ type MuxDestinationOptions struct {
 	PlaybackPolicy []string `json:"playbackPolicy,omitempty"`
 }
 
+func NewMuxDestinationOptions(obj map[string]interface{}) *MuxDestinationOptions {
+	options := &MuxDestinationOptions{}
+
+	if obj["playbackPolicy"] != nil {
+		policy := obj["playbackPolicy"].([]interface{})
+		for _, i := range policy {
+			options.PlaybackPolicy = append(options.PlaybackPolicy, i.(string))
+		}
+	}
+
+	return options
+}
+
 // AssertMuxDestinationOptionsRequired checks if the required fields are not zero-ed
 func AssertMuxDestinationOptionsRequired(obj MuxDestinationOptions) error {
 	return nil
