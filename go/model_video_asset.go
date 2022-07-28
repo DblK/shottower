@@ -28,6 +28,7 @@ package openapi
 
 import (
 	"github.com/creasty/defaults"
+	"github.com/spf13/cast"
 )
 
 // VideoAsset - The VideoAsset is used to create video sequences from video files. The src must be a publicly accessible URL to a video resource such as an mp4 file.
@@ -48,6 +49,29 @@ type VideoAsset struct {
 	Crop *Crop `json:"crop,omitempty"`
 
 	Subtitle *Subtitle `json:"subtitle,omitempty"`
+}
+
+func NewVideoAsset(m map[string]interface{}) *VideoAsset {
+	videoAsset := &VideoAsset{
+		Type: m["type"].(string),
+	}
+
+	if m["src"] != nil {
+		videoAsset.Src = m["src"].(string)
+	}
+	if m["trim"] != nil {
+		videoAsset.Trim = cast.ToFloat32(m["trim"].(float64))
+	}
+	if m["volume"] != nil {
+		videoAsset.Volume = cast.ToFloat32(m["volume"].(float64))
+	}
+	if m["crop"] != nil {
+		videoAsset.Crop = NewCrop(m["crop"].(map[string]interface{}))
+	}
+	if m["subtitle"] != nil {
+		videoAsset.Subtitle = NewSubtitle(m["subtitle"].(map[string]interface{}))
+	}
+	return videoAsset
 }
 
 // AssertVideoAssetRequired checks if the required fields are not zero-ed

@@ -26,6 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package openapi
 
+import "github.com/spf13/cast"
+
 // Crop - Crop the sides of an asset by a relative amount. The size of the crop is specified using a scale between 0 and 1, relative to the screen width - i.e a left crop of 0.5 will crop half of the asset from the left, a top crop  of 0.25 will crop the top by quarter of the asset.
 type Crop struct {
 
@@ -40,6 +42,24 @@ type Crop struct {
 
 	// Crop from the left of the asset
 	Right float32 `json:"right,omitempty"`
+}
+
+func NewCrop(m map[string]interface{}) *Crop {
+	crop := &Crop{}
+
+	if m["top"] != nil {
+		crop.Top = cast.ToFloat32(m["top"].(float64))
+	}
+	if m["bottom"] != nil {
+		crop.Bottom = cast.ToFloat32(m["bottom"].(float64))
+	}
+	if m["left"] != nil {
+		crop.Left = cast.ToFloat32(m["left"].(float64))
+	}
+	if m["right"] != nil {
+		crop.Right = cast.ToFloat32(m["right"].(float64))
+	}
+	return crop
 }
 
 // AssertCropRequired checks if the required fields are not zero-ed

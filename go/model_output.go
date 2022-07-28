@@ -27,7 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package openapi
 
 import (
+	"encoding/json"
+
 	"github.com/creasty/defaults"
+	"github.com/spf13/cast"
 	"golang.org/x/exp/slices"
 )
 
@@ -63,7 +66,66 @@ type Output struct {
 
 	Thumbnail *Thumbnail `json:"thumbnail,omitempty"`
 
-	Destinations []Destinations `json:"destinations,omitempty"`
+	Destinations []interface{} `json:"destinations,omitempty"`
+}
+
+func NewOutput(data map[string]interface{}) *Output {
+	output := &Output{
+		Format: data["format"].(string),
+	}
+
+	if data["resolution"] != nil {
+		output.Resolution = data["resolution"].(string)
+	}
+	if data["aspectRatio"] != nil {
+		output.AspectRatio = data["aspectRatio"].(string)
+	}
+	if data["size"] != nil {
+		*output.Size = *NewSize(data["size"].(map[string]interface{}))
+	}
+	if data["fps"] != nil {
+		fps := cast.ToFloat32(data["fps"].(float64))
+		output.Fps = &fps
+	}
+	if data["scaleTo"] != nil {
+		output.ScaleTo = data["scaleTo"].(string)
+	}
+	if data["quality"] != nil {
+		output.Quality = data["quality"].(string)
+	}
+	if data["repeat"] != nil {
+		output.Repeat = data["repeat"].(bool)
+	}
+	if data["range"] != nil {
+		*output.Range = *NewRange(data["range"].(map[string]interface{}))
+	}
+	if data["poster"] != nil {
+		*output.Poster = *NewPoster(data["poster"].(map[string]interface{}))
+	}
+	if data["thumbnail"] != nil {
+		*output.Thumbnail = *NewThumbnail(data["thumbnail"].(map[string]interface{}))
+	}
+
+	if data["destinations"] != nil {
+		for _, dest := range data["destinations"].([]map[string]interface{}) {
+			var provider = dest["provider"].(string)
+			destination := NewDestination(provider, dest)
+			output.Destinations = append(output.Destinations, destination)
+		}
+	}
+	return output
+}
+
+func (s *Output) UnmarshalJSON(data []byte) error {
+	var obj map[string]interface{}
+	err := json.Unmarshal(data, &obj)
+	if err != nil {
+		return err
+	}
+
+	*s = *NewOutput(obj)
+
+	return nil
 }
 
 func (s *Output) checkEnumValues() error {
@@ -131,11 +193,11 @@ func AssertOutputRequired(obj *Output) error {
 	if err := AssertThumbnailRequired(obj.Thumbnail); err != nil {
 		return err
 	}
-	for i := range obj.Destinations {
-		if err := AssertDestinationsRequired(&obj.Destinations[i]); err != nil {
-			return err
-		}
-	}
+	// for i := range obj.Destinations {
+	// 	if err := AssertDestinationsRequired(&obj.Destinations[i]); err != nil {
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
 

@@ -36,6 +36,18 @@ type FlipTransformation struct {
 	Vertical bool `json:"vertical,omitempty"`
 }
 
+func NewFlipTransformation(m map[string]interface{}) *FlipTransformation {
+	transform := &FlipTransformation{}
+
+	if m["horizontal"] != nil {
+		transform.Horizontal = m["horizontal"].(bool)
+	}
+	if m["vertical"] != nil {
+		transform.Vertical = m["vertical"].(bool)
+	}
+	return transform
+}
+
 // AssertFlipTransformationRequired checks if the required fields are not zero-ed
 func AssertFlipTransformationRequired(obj FlipTransformation) error {
 	return nil

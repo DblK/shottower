@@ -26,6 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package openapi
 
+import "github.com/spf13/cast"
+
 // Range - Specify a time range to render, i.e. to render only a portion of a video or audio file. Omit this setting to  export the entire video. Range can also be used to render a frame at a specific time point - setting a range and output format as `jpg` will output a single frame image at the range `start` point.
 type Range struct {
 
@@ -34,6 +36,20 @@ type Range struct {
 
 	// The length of the portion of the video or audio to render - i.e. render 6 seconds of the video.
 	Length *float32 `json:"length,omitempty"`
+}
+
+func NewRange(m map[string]interface{}) *Range {
+	size := &Range{}
+
+	if m["start"] != nil {
+		start := cast.ToFloat32(m["start"].(float64))
+		size.Start = &start
+	}
+	if m["length"] != nil {
+		length := cast.ToFloat32(m["length"].(float64))
+		size.Length = &length
+	}
+	return size
 }
 
 func (s *Range) checkEnumValues() error {

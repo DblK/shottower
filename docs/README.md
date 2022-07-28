@@ -16,6 +16,93 @@
   - [Picture in Picture Video Editor](https://shotstack.io/demo/picture-in-picture/) - [Source Code](https://github.com/shotstack/picture-in-picture-demo)
   - [Pexels Video Maker](https://shotstack.io/demo/pexels/)
 
+## cURL Picture in Picture example
+```sh
+curl -d '{
+    "timeline": {
+        "background": "#000000",
+        "tracks": [
+            {
+                "clips": [
+                    {
+                        "asset": {
+                            "type": "video",
+                            "src": "https://shotstack-assets.s3.ap-southeast-2.amazonaws.com/examples/picture-in-picture/commentary.mp4",
+                            "volume": 1
+                        },
+                        "start": 0,
+                        "length": 4.96
+                    },
+                    {
+                        "asset": {
+                            "type": "video",
+                            "src": "https://shotstack-assets.s3.ap-southeast-2.amazonaws.com/examples/picture-in-picture/commentary.mp4",
+                            "volume": 1,
+                            "trim": 5
+                        },
+                        "start": 5,
+                        "length": 4.96,
+                        "scale": 0.35,
+                        "position": "bottomRight"
+                    },
+                    {
+                        "asset": {
+                            "type": "video",
+                            "src": "https://shotstack-assets.s3.ap-southeast-2.amazonaws.com/examples/picture-in-picture/commentary.mp4",
+                            "volume": 1,
+                            "trim": 10
+                        },
+                        "start": 10,
+                        "length": 2.46,
+                        "scale": 0.35,
+                        "position": "topRight"
+                    },
+                    {
+                        "asset": {
+                            "type": "video",
+                            "src": "https://shotstack-assets.s3.ap-southeast-2.amazonaws.com/examples/picture-in-picture/commentary.mp4",
+                            "volume": 1,
+                            "trim": 12.5
+                        },
+                        "start": 12.5,
+                        "length": 2.5,
+                        "scale": 0.25,
+                        "position": "topRight"
+                    }
+                ]
+            },
+            {
+                "clips": [
+                    {
+                        "asset": {
+                            "type": "video",
+                            "src": "https://shotstack-assets.s3.ap-southeast-2.amazonaws.com/examples/picture-in-picture/code.mp4"
+                        },
+                        "start": 5,
+                        "length": 10
+                    }
+                ]
+            }
+        ]
+    },
+    "output": {
+        "format": "mp4",
+        "resolution": "hd"
+    }
+}'  \
+-H "Content-Type: application/json" \
+-X POST http://0.0.0.0:4000/stage/render
+```
+
+## cURL command for the status
+From the id given by the previous command:
+
+```sh
+curl -X GET http://0.0.0.0:4000/stage/render/d2b46ed6-998a-4d6b-9d91-b8cf0193a655 \
+-H 'Accept: application/json' \
+  -H 'x-api-key: freeKey'
+```
+Then you should have the `url` property to know where to download the render.
 ## cURL command for downloading renders
 
 ```sh

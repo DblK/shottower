@@ -35,6 +35,21 @@ type Transformation struct {
 	Flip FlipTransformation `json:"flip,omitempty"`
 }
 
+func NewTransformation(m map[string]interface{}) *Transformation {
+	transform := &Transformation{}
+
+	if m["rotate"] != nil {
+		transform.Rotate = *NewRotateTransformation(m["rotate"].(map[string]interface{}))
+	}
+	if m["skew"] != nil {
+		transform.Skew = *NewSkewTransformation(m["skew"].(map[string]interface{}))
+	}
+	if m["flip"] != nil {
+		transform.Flip = *NewFlipTransformation(m["flip"].(map[string]interface{}))
+	}
+	return transform
+}
+
 // AssertTransformationRequired checks if the required fields are not zero-ed
 func AssertTransformationRequired(obj *Transformation) error {
 	if obj == nil {

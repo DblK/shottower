@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"net/url"
 	"os/exec"
+	"path/filepath"
 	"time"
 )
 
@@ -171,18 +172,21 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 	for _, track := range queue.Data.Timeline.Tracks {
 		for _, clip := range track.Clips {
 			// fmt.Println(tIndex, cIndex, clip.Asset.Type)
-			switch clip.Asset.Type {
-			case "video":
-				var fileName = assetFiles[clip.Asset.Src]
+
+			var typeAsset = GetAssetType(clip.Asset)
+			switch typeAsset { // nolint:exhaustive
+			case VideoAssetType:
+				var asset = clip.Asset.(*VideoAsset)
+				var fileName = assetFiles[asset.Src]
 
 				if fileName == "" {
-					url, _ := url.Parse(clip.Asset.Src)
+					url, _ := url.Parse(asset.Src)
 
 					if url.Scheme == "file" {
-						fileName = clip.Asset.Src[7:]
+						fileName = asset.Src[7:]
 					} else {
 						var err error
-						fileName, err = s.DownloadFile(clip.Asset.Src)
+						fileName, err = s.DownloadFile(asset.Src)
 						if err != nil {
 							fmt.Println("Error while downloading asset", err)
 							hasError = true
@@ -191,9 +195,9 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 				}
 
 				if !hasError {
-					fmt.Println("Asset downloaded: "+clip.Asset.Src, fileName)
+					fmt.Println("Asset downloaded: "+asset.Src, fileName)
 					queue.LocalResources = append(queue.LocalResources, fileName)
-					assetFiles[clip.Asset.Src] = fileName
+					assetFiles[asset.Src] = fileName
 				}
 
 			// case "image":
@@ -204,7 +208,7 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 			// 		fmt.Println("TODO: Download asset")
 			// 	}
 			default:
-				fmt.Println("Unhandled asset type", clip.Asset.Type)
+				fmt.Println("Unhandled asset type", typeAsset.String())
 			}
 		}
 	}
@@ -222,7 +226,7 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 }
 
 func (s *ProcessingQueue) DownloadFile(url string) (string, error) {
-	file, err := ioutil.TempFile("", "asset*")
+	file, err := ioutil.TempFile("", "asset*"+filepath.Ext(url))
 	if err != nil {
 		fmt.Println("Error temp file", err)
 		return "", err
