@@ -29,7 +29,6 @@ package openapi
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 
 	"github.com/spf13/cast"
 	"golang.org/x/exp/slices"
@@ -157,9 +156,9 @@ func (s *Clip) ToFFMPEG(FFMPEGCommand FFMPEGCommand, sourceClip int, trackNumber
 	var audioEffects []string
 	var handled bool
 
-	var typeAsset = reflect.TypeOf(s.Asset).String()
-	switch typeAsset {
-	case "*openapi.VideoAsset":
+	var typeAsset = GetAssetType(s.Asset)
+	switch typeAsset { // nolint:exhaustive
+	case VideoAssetType:
 		var currentAsset = s.Asset.(*VideoAsset)
 
 		if currentAsset.Subtitle != nil {
@@ -180,11 +179,11 @@ func (s *Clip) ToFFMPEG(FFMPEGCommand FFMPEGCommand, sourceClip int, trackNumber
 			audioEffects = append(audioEffects, FFMPEGCommand.ClipAudioDelay(sourceClip, trackNumber, currentClip, s.Start*1000))
 		}
 
-	case "*openapi.ImageAsset":
+	case ImageAssetType:
 		handled = true
 		effects = append(effects, FFMPEGCommand.ClipImage(sourceClip, trackNumber, currentClip, 0, s.Length))
 	default:
-		fmt.Println("Type not handled for converting to FFMPEG", typeAsset)
+		fmt.Println("Type not handled for converting to FFMPEG", typeAsset.String())
 	}
 
 	if !handled {

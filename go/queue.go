@@ -27,7 +27,6 @@ import (
 	"net/url"
 	"os/exec"
 	"path/filepath"
-	"reflect"
 	"time"
 )
 
@@ -156,9 +155,10 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 	for _, track := range queue.Data.Timeline.Tracks {
 		for _, clip := range track.Clips {
 			// fmt.Println(tIndex, cIndex, clip.Asset.Type)
-			var typeAsset = reflect.TypeOf(clip.Asset).String()
-			switch typeAsset {
-			case "*openapi.VideoAsset":
+
+			var typeAsset = GetAssetType(clip.Asset)
+			switch typeAsset { // nolint:exhaustive
+			case VideoAssetType:
 				var asset = clip.Asset.(*VideoAsset)
 				var fileName = assetFiles[asset.Src]
 
@@ -191,7 +191,7 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 			// 		fmt.Println("TODO: Download asset")
 			// 	}
 			default:
-				fmt.Println("Unhandled asset type", typeAsset)
+				fmt.Println("Unhandled asset type", typeAsset.String())
 			}
 		}
 	}

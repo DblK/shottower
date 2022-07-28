@@ -28,6 +28,38 @@ package openapi
 
 import "reflect"
 
+type AssetType int64
+
+const (
+	VideoAssetType AssetType = iota
+	ImageAssetType
+	TitleAssetType
+	HTMLAssetType
+	AudioAssetType
+	LumaAssetType
+	UnknownAssetType
+)
+
+func (s AssetType) String() string {
+	switch s { // nolint:exhaustive
+	case VideoAssetType:
+		return "video"
+	case ImageAssetType:
+		return "image"
+	case TitleAssetType:
+		return "title"
+	case HTMLAssetType:
+		return "html"
+	case AudioAssetType:
+		return "audio"
+	case LumaAssetType:
+		return "luma"
+
+	default:
+		return "unknown"
+	}
+}
+
 func NewAsset(typeAsset string, obj map[string]interface{}) interface{} {
 	switch typeAsset {
 	case "video":
@@ -37,11 +69,29 @@ func NewAsset(typeAsset string, obj map[string]interface{}) interface{} {
 	return nil
 }
 
+func GetAssetType(asset interface{}) AssetType {
+	switch reflect.TypeOf(asset).String() {
+	case "*openapi.VideoAsset":
+		return VideoAssetType
+	case "*openapi.ImageAsset":
+		return ImageAssetType
+	case "*openapi.TitleAsset":
+		return TitleAssetType
+	case "*openapi.HTMLAsset":
+		return HTMLAssetType
+	case "*openapi.AudioAsset":
+		return AudioAssetType
+	case "*openapi.LumaAsset":
+		return LumaAssetType
+	default:
+		return UnknownAssetType
+	}
+}
+
 // AssertAssetRequired checks if the required fields are not zero-ed
 func AssertAssetRequired(obj interface{}) error {
-	var typeAsset = reflect.TypeOf(obj).String()
-	switch typeAsset {
-	case "*openapi.VideoAsset":
+	switch GetAssetType(obj) { // nolint:exhaustive
+	case VideoAssetType:
 		return AssertVideoAssetRequired(obj.(VideoAsset))
 	}
 	return nil
