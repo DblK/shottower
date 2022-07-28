@@ -26,11 +26,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package openapi
 
+import "github.com/spf13/cast"
+
 // Poster - Generate a poster image for the video at a specific point from the timeline. The poster image size will match the size of the output video.
 type Poster struct {
 
 	// The point on the timeline in seconds to capture a single frame to use as the poster image.
 	Capture float32 `json:"capture"`
+}
+
+func NewPoster(m map[string]interface{}) *Poster {
+	poster := &Poster{}
+
+	if m["capture"] != nil {
+		poster.Capture = cast.ToFloat32(m["capture"].(float64))
+	}
+	return poster
 }
 
 func (s *Poster) checkEnumValues() error {

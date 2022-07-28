@@ -28,6 +28,7 @@ package openapi
 
 import (
 	"github.com/creasty/defaults"
+	"github.com/spf13/cast"
 )
 
 // Subtitle - Subtitle allow to burn a specific subtitle into the video
@@ -41,7 +42,7 @@ func NewSubtitle(m map[string]interface{}) *Subtitle {
 	subtitle := &Subtitle{}
 
 	if m["index"] != nil {
-		subtitle.Index = m["index"].(int)
+		subtitle.Index = cast.ToInt(m["index"].(float64))
 	}
 	return subtitle
 }

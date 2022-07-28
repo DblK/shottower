@@ -26,6 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package openapi
 
+import "github.com/spf13/cast"
+
 // Offset - Offsets the position of an asset horizontally or vertically by a relative distance.
 type Offset struct {
 
@@ -34,6 +36,18 @@ type Offset struct {
 
 	// Offset an asset on the vertical axis (up or down), range varies from -1 to 1. Positive numbers move the asset up, negative down. For all assets except titles the distance moved is relative to the height  of the viewport - i.e. an Y offset of 0.5 will move the asset up half the  screen height.
 	Y float32 `json:"y,omitempty"`
+}
+
+func NewOffset(m map[string]interface{}) *Offset {
+	offset := &Offset{}
+
+	if m["x"] != nil {
+		offset.X = cast.ToFloat32(m["x"].(float64))
+	}
+	if m["y"] != nil {
+		offset.Y = cast.ToFloat32(m["y"].(float64))
+	}
+	return offset
 }
 
 func (s *Offset) checkEnumValues() error {

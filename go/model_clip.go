@@ -71,11 +71,46 @@ type Clip struct {
 }
 
 func NewClip(data map[string]interface{}, asset interface{}) *Clip {
-	return &Clip{
-		Start:  cast.ToFloat32(data["start"].(float64)),
-		Length: cast.ToFloat32(data["length"].(float64)),
-		Asset:  asset,
+	clip := &Clip{
+		Asset: asset,
 	}
+
+	if data["start"] != nil {
+		clip.Start = cast.ToFloat32(data["start"].(float64))
+	}
+	if data["length"] != nil {
+		clip.Length = cast.ToFloat32(data["length"].(float64))
+	}
+	if data["fit"] != nil {
+		clip.Fit = data["fit"].(string)
+	}
+	if data["scale"] != nil {
+		scale := cast.ToFloat32(data["scale"].(float64))
+		clip.Scale = &scale
+	}
+	if data["position"] != nil {
+		clip.Position = data["position"].(string)
+	}
+	if data["offset"] != nil {
+		clip.Offset = NewOffset(data["offset"].(map[string]interface{}))
+	}
+	if data["transition"] != nil {
+		clip.Transition = NewTransition(data["transition"].(map[string]interface{}))
+	}
+	if data["effect"] != nil {
+		clip.Effect = data["effect"].(string)
+	}
+	if data["filter"] != nil {
+		clip.Filter = data["filter"].(string)
+	}
+	if data["opacity"] != nil {
+		clip.Opacity = cast.ToFloat32(data["opacity"].(float64))
+	}
+	if data["transform"] != nil {
+		clip.Transform = NewTransformation(data["transform"].(map[string]interface{}))
+	}
+
+	return clip
 }
 
 func (s *Clip) UnmarshalJSON(data []byte) error {
