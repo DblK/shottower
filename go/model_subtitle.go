@@ -35,7 +35,7 @@ import (
 type Subtitle struct {
 
 	// Index of the subtitle stream (Default to 0).
-	Index int `json:"index,omitempty" default:"0"`
+	Index int `json:"index" default:"0"`
 }
 
 func NewSubtitle(m map[string]interface{}) *Subtitle {
