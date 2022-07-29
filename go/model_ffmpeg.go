@@ -48,4 +48,5 @@ type FFMPEGCommand interface {
 	ToFFMPEG(*RenderQueue) error
 	GetOutputName() string
 	GetDuration() float32
+	HasYoutubeDestination() error
 }

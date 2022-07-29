@@ -72,6 +72,13 @@ func (s *ProcessingQueue) ProcessQueue(editAPI EditAPIServicer) {
 		fmt.Println(s.currentQueue.Status.String())
 
 		if s.currentQueue.InternalStatus == Fetched {
+			// Optimize output for youtube
+			for _, destination := range s.currentQueue.Data.Output.Destinations {
+				if GetDestinationProvider(destination) == YoutubeDestinationType {
+					_ = s.currentQueue.FFMPEGCommand.HasYoutubeDestination()
+				}
+			}
+
 			params := s.GenerateParameters(s.currentQueue)
 			s.currentQueue.Updated = time.Now()
 
