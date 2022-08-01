@@ -26,7 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package openapi
 
-import "github.com/creasty/defaults"
+import (
+	"github.com/creasty/defaults"
+)
 
 // Timeline - A timeline represents the contents of a video edit over time, an audio edit over time, in seconds, or an image layout. A timeline consists of layers called tracks. Tracks are composed of titles, images, audio, html or video segments referred to as clips which are placed along the track at specific starting point and lasting for a specific amount of time.
 type Timeline struct {
@@ -42,7 +44,7 @@ type Timeline struct {
 	Tracks []Track `json:"tracks"`
 
 	// Disable the caching of ingested source footage and assets. See  [caching](https://shotstack.io/docs/guide/architecting-an-application/caching) for more details.
-	Cache bool `json:"cache,omitempty"`
+	Cache bool `json:"cache,omitempty" default:"true"`
 }
 
 // AssertTimelineRequired checks if the required fields are not zero-ed
