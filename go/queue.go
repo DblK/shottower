@@ -25,6 +25,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
@@ -58,8 +59,10 @@ func (s *ProcessingQueue) StartProcessQueue(editAPI EditAPIServicer) {
 func (s *ProcessingQueue) CleanCache() {
 	for _, resource := range s.LocalResources {
 		if !resource.KeepCache {
-			// TODO: Delete local resource
-			// resource.LocalURL
+			// Remove local asset only if remote resource
+			if resource.IsRemoteResource {
+				_ = os.Remove(resource.LocalURL)
+			}
 
 			s.LocalResources[resource.OriginalURL] = nil
 		}
@@ -187,6 +190,7 @@ func (s *ProcessingQueue) FetchVideoAssets(trackNumber int, clipNumber int, clip
 
 	if s.LocalResources[asset.Src] == nil {
 		var fileName string
+		var remote bool
 		url, _ := url.Parse(asset.Src)
 
 		if url.Scheme == "file" {
@@ -198,15 +202,17 @@ func (s *ProcessingQueue) FetchVideoAssets(trackNumber int, clipNumber int, clip
 				fmt.Println("Error while downloading asset", err)
 				hasError = true
 			}
+			remote = true
 		}
 
 		if !hasError {
 			fmt.Println("Asset downloaded: "+asset.Src, fileName)
 			localResource := &LocalResource{
-				Downloaded:  time.Now(),
-				OriginalURL: asset.Src,
-				LocalURL:    fileName,
-				KeepCache:   useCache,
+				Downloaded:       time.Now(),
+				OriginalURL:      asset.Src,
+				LocalURL:         fileName,
+				KeepCache:        useCache,
+				IsRemoteResource: remote,
 			}
 			s.LocalResources[asset.Src] = localResource
 		}

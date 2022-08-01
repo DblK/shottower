@@ -20,12 +20,12 @@ package openapi
 import "time"
 
 type LocalResource struct {
-	Downloaded  time.Time `json:"downloaded"`
-	OriginalURL string
-	LocalURL    string
-	KeepCache   bool
-
-	Used []*LocalResourceTrackInfo
+	Downloaded       time.Time `json:"downloaded"`
+	OriginalURL      string
+	LocalURL         string
+	KeepCache        bool
+	IsRemoteResource bool
+	Used             []*LocalResourceTrackInfo
 }
 
 type LocalResourceTrackInfo struct {
