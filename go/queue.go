@@ -32,10 +32,15 @@ import (
 
 type ProcessingQueue struct {
 	currentQueue *RenderQueue
+
+	LocalResources map[string]*LocalResource
 }
 
 func NewProcessingQueuer() ProcessingQueuer {
-	return &ProcessingQueue{}
+	processingQueue := &ProcessingQueue{}
+	processingQueue.LocalResources = make(map[string]*LocalResource)
+
+	return processingQueue
 }
 
 func (s *ProcessingQueue) StartProcessQueue(editAPI EditAPIServicer) {
@@ -44,6 +49,17 @@ func (s *ProcessingQueue) StartProcessQueue(editAPI EditAPIServicer) {
 	go time.AfterFunc(1*time.Second, func() {
 		s.ProcessQueue(editAPI)
 	})
+}
+
+func (s *ProcessingQueue) FindSourceClip(trackNumber int, clipNumber int) string {
+	for _, resource := range s.LocalResources {
+		for _, used := range resource.Used {
+			if used.Track == trackNumber && used.Clip == clipNumber {
+				return resource.LocalURL
+			}
+		}
+	}
+	return ""
 }
 
 func (s *ProcessingQueue) ProcessQueue(editAPI EditAPIServicer) {
@@ -138,7 +154,7 @@ func (s *ProcessingQueue) GenerateParameters(queue *RenderQueue) []string {
 	queue.Status = Rendering
 	queue.InternalStatus = Generating
 
-	_ = queue.FFMPEGCommand.ToFFMPEG(queue)
+	_ = queue.FFMPEGCommand.ToFFMPEG(queue, s)
 
 	queue.InternalStatus = Generated
 
@@ -150,19 +166,18 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 	queue.InternalStatus = Fetching
 
 	var hasError bool
-	var assetFiles = make(map[string]string)
 
-	for _, track := range queue.Data.Timeline.Tracks {
-		for _, clip := range track.Clips {
+	for tIndex, track := range queue.Data.Timeline.Tracks {
+		for cIndex, clip := range track.Clips {
 			// fmt.Println(tIndex, cIndex, clip.Asset.Type)
 
 			var typeAsset = GetAssetType(clip.Asset)
 			switch typeAsset { // nolint:exhaustive
 			case VideoAssetType:
 				var asset = clip.Asset.(*VideoAsset)
-				var fileName = assetFiles[asset.Src]
 
-				if fileName == "" {
+				if s.LocalResources[asset.Src] == nil {
+					var fileName string
 					url, _ := url.Parse(asset.Src)
 
 					if url.Scheme == "file" {
@@ -175,12 +190,25 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 							hasError = true
 						}
 					}
+
+					if !hasError {
+						fmt.Println("Asset downloaded: "+asset.Src, fileName)
+						localResource := &LocalResource{
+							Downloaded:  time.Now(),
+							OriginalURL: asset.Src,
+							LocalURL:    fileName,
+						}
+						s.LocalResources[asset.Src] = localResource
+					}
 				}
 
 				if !hasError {
-					fmt.Println("Asset downloaded: "+asset.Src, fileName)
-					queue.LocalResources = append(queue.LocalResources, fileName)
-					assetFiles[asset.Src] = fileName
+					s.LocalResources[asset.Src].Used = append(
+						s.LocalResources[asset.Src].Used,
+						&LocalResourceTrackInfo{
+							Track: tIndex,
+							Clip:  cIndex,
+						})
 				}
 
 			// case "image":

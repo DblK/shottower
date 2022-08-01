@@ -19,17 +19,15 @@ package openapi
 
 import "time"
 
-type RenderQueue struct {
-	// The id of the render task in UUID format.
-	ID string `json:"id"`
+type LocalResource struct {
+	Downloaded  time.Time `json:"downloaded"`
+	OriginalURL string
+	LocalURL    string
 
-	Created time.Time `json:"created"`
-	Updated time.Time `json:"updated"`
+	Used []*LocalResourceTrackInfo
+}
 
-	Data     Edit `json:"data"`
-	Status   RenderResponseStatus
-	FileName string
-
-	InternalStatus RenderResponseStatus
-	FFMPEGCommand  FFMPEGCommand
+type LocalResourceTrackInfo struct {
+	Track int
+	Clip  int
 }

@@ -470,19 +470,19 @@ func (s *FFMPEG) generateOutputName() string {
 	return file.Name()
 }
 
-func (s *FFMPEG) ToFFMPEG(queue *RenderQueue) error {
+func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) error {
 	_ = s.AddDefaultParams()
-	_ = s.SetOutputFormat(queue.Data.Output.Format)
-	if queue.Data.Output.Fps != nil {
-		_ = s.SetOutputFps(*queue.Data.Output.Fps)
+	_ = s.SetOutputFormat(renderQueue.Data.Output.Format)
+	if renderQueue.Data.Output.Fps != nil {
+		_ = s.SetOutputFps(*renderQueue.Data.Output.Fps)
 	}
-	_ = s.SetDefaultBackground(queue.Data.Timeline.Background)
+	_ = s.SetDefaultBackground(renderQueue.Data.Timeline.Background)
 
 	// Handle Sources
 	var sourceClip = 0
 	s.fillerCounter = 0
 
-	for trackNumber, track := range queue.Data.Timeline.Tracks {
+	for trackNumber, track := range renderQueue.Data.Timeline.Tracks {
 		var lastStart float32
 		var clipNumber = 0
 
@@ -501,7 +501,11 @@ func (s *FFMPEG) ToFFMPEG(queue *RenderQueue) error {
 				clipNumber = clipNumber + 1
 			}
 			// fmt.Println(sourceClip, s.fillerCounter)
-			_ = s.AddSource(queue.LocalResources[sourceClip])
+
+			sourceFileName := queue.FindSourceClip(trackNumber, clipNumber)
+			if sourceFileName != "" {
+				_ = s.AddSource(sourceFileName)
+			}
 
 			_ = clip.ToFFMPEG(s, sourceClip, trackNumber, clipNumber)
 

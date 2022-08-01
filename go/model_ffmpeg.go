@@ -45,7 +45,7 @@ type FFMPEGCommand interface {
 	GetResolution() string
 	GenerateFiller(string) string
 	GenerateBackground() string
-	ToFFMPEG(*RenderQueue) error
+	ToFFMPEG(*RenderQueue, *ProcessingQueue) error
 	GetOutputName() string
 	GetDuration() float32
 }
