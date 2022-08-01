@@ -25,6 +25,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
@@ -32,10 +33,15 @@ import (
 
 type ProcessingQueue struct {
 	currentQueue *RenderQueue
+
+	LocalResources map[string]*LocalResource
 }
 
 func NewProcessingQueuer() ProcessingQueuer {
-	return &ProcessingQueue{}
+	processingQueue := &ProcessingQueue{}
+	processingQueue.LocalResources = make(map[string]*LocalResource)
+
+	return processingQueue
 }
 
 func (s *ProcessingQueue) StartProcessQueue(editAPI EditAPIServicer) {
@@ -44,6 +50,38 @@ func (s *ProcessingQueue) StartProcessQueue(editAPI EditAPIServicer) {
 	go time.AfterFunc(1*time.Second, func() {
 		s.ProcessQueue(editAPI)
 	})
+
+	go time.AfterFunc(1*time.Hour, func() {
+		s.CleanCache()
+	})
+}
+
+func (s *ProcessingQueue) CleanCache() {
+	for _, resource := range s.LocalResources {
+		if !resource.KeepCache {
+			// Remove local asset only if remote resource
+			if resource.IsRemoteResource {
+				_ = os.Remove(resource.LocalURL)
+			}
+
+			s.LocalResources[resource.OriginalURL] = nil
+		}
+	}
+
+	go time.AfterFunc(1*time.Hour, func() {
+		s.CleanCache()
+	})
+}
+
+func (s *ProcessingQueue) FindSourceClip(trackNumber int, clipNumber int) string {
+	for _, resource := range s.LocalResources {
+		for _, used := range resource.Used {
+			if used.Track == trackNumber && used.Clip == clipNumber {
+				return resource.LocalURL
+			}
+		}
+	}
+	return ""
 }
 
 func (s *ProcessingQueue) ProcessQueue(editAPI EditAPIServicer) {
@@ -138,11 +176,104 @@ func (s *ProcessingQueue) GenerateParameters(queue *RenderQueue) []string {
 	queue.Status = Rendering
 	queue.InternalStatus = Generating
 
-	_ = queue.FFMPEGCommand.ToFFMPEG(queue)
+	_ = queue.FFMPEGCommand.ToFFMPEG(queue, s)
 
 	queue.InternalStatus = Generated
 
 	return queue.FFMPEGCommand.ToString()
+}
+
+func (s *ProcessingQueue) FetchVideoAssets(trackNumber int, clipNumber int, clip Clip, useCache bool) bool {
+	var hasError bool
+
+	var asset = clip.Asset.(*VideoAsset)
+
+	if s.LocalResources[asset.Src] == nil {
+		var fileName string
+		var remote bool
+		url, _ := url.Parse(asset.Src)
+
+		if url.Scheme == "file" {
+			fileName = asset.Src[7:]
+		} else {
+			var err error
+			fileName, err = s.DownloadFile(asset.Src)
+			if err != nil {
+				fmt.Println("Error while downloading asset", err)
+				hasError = true
+			}
+			remote = true
+		}
+
+		if !hasError {
+			fmt.Println("Asset downloaded: "+asset.Src, fileName)
+			localResource := &LocalResource{
+				Downloaded:       time.Now(),
+				OriginalURL:      asset.Src,
+				LocalURL:         fileName,
+				KeepCache:        useCache,
+				IsRemoteResource: remote,
+			}
+			s.LocalResources[asset.Src] = localResource
+		}
+	}
+
+	if !hasError {
+		s.LocalResources[asset.Src].Used = append(
+			s.LocalResources[asset.Src].Used,
+			&LocalResourceTrackInfo{
+				Track: trackNumber,
+				Clip:  clipNumber,
+			})
+	}
+
+	return hasError
+}
+func (s *ProcessingQueue) FetchImageAssets(trackNumber int, clipNumber int, clip Clip, useCache bool) bool {
+	var hasError bool
+
+	var asset = clip.Asset.(*ImageAsset)
+
+	if s.LocalResources[asset.Src] == nil {
+		var fileName string
+		var remote bool
+		url, _ := url.Parse(asset.Src)
+
+		if url.Scheme == "file" {
+			fileName = asset.Src[7:]
+		} else {
+			var err error
+			fileName, err = s.DownloadFile(asset.Src)
+			if err != nil {
+				fmt.Println("Error while downloading asset", err)
+				hasError = true
+			}
+			remote = true
+		}
+
+		if !hasError {
+			fmt.Println("Asset downloaded: "+asset.Src, fileName)
+			localResource := &LocalResource{
+				Downloaded:       time.Now(),
+				OriginalURL:      asset.Src,
+				LocalURL:         fileName,
+				KeepCache:        useCache,
+				IsRemoteResource: remote,
+			}
+			s.LocalResources[asset.Src] = localResource
+		}
+	}
+
+	if !hasError {
+		s.LocalResources[asset.Src].Used = append(
+			s.LocalResources[asset.Src].Used,
+			&LocalResourceTrackInfo{
+				Track: trackNumber,
+				Clip:  clipNumber,
+			})
+	}
+
+	return hasError
 }
 
 func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
@@ -150,62 +281,19 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 	queue.InternalStatus = Fetching
 
 	var hasError bool
-	var assetFiles = make(map[string]string)
 
-	for _, track := range queue.Data.Timeline.Tracks {
-		for _, clip := range track.Clips {
+	useCache := queue.Data.Timeline.Cache
+
+	for tIndex, track := range queue.Data.Timeline.Tracks {
+		for cIndex, clip := range track.Clips {
 			// fmt.Println(tIndex, cIndex, clip.Asset.Type)
 
 			var typeAsset = GetAssetType(clip.Asset)
 			switch typeAsset { // nolint:exhaustive
 			case VideoAssetType:
-				var asset = clip.Asset.(*VideoAsset)
-				var fileName = assetFiles[asset.Src]
-
-				if fileName == "" {
-					url, _ := url.Parse(asset.Src)
-
-					if url.Scheme == "file" {
-						fileName = asset.Src[7:]
-					} else {
-						var err error
-						fileName, err = s.DownloadFile(asset.Src)
-						if err != nil {
-							fmt.Println("Error while downloading asset", err)
-							hasError = true
-						}
-					}
-				}
-
-				if !hasError {
-					fmt.Println("Asset downloaded: "+asset.Src, fileName)
-					queue.LocalResources = append(queue.LocalResources, fileName)
-					assetFiles[asset.Src] = fileName
-				}
+				hasError = s.FetchVideoAssets(tIndex, cIndex, clip, useCache)
 			case ImageAssetType:
-				var asset = clip.Asset.(*ImageAsset)
-				var fileName = assetFiles[asset.Src]
-
-				if fileName == "" {
-					url, _ := url.Parse(asset.Src)
-
-					if url.Scheme == "file" {
-						fileName = asset.Src[7:]
-					} else {
-						var err error
-						fileName, err = s.DownloadFile(asset.Src)
-						if err != nil {
-							fmt.Println("Error while downloading asset", err)
-							hasError = true
-						}
-					}
-				}
-
-				if !hasError {
-					fmt.Println("Asset downloaded: "+asset.Src, fileName)
-					queue.LocalResources = append(queue.LocalResources, fileName)
-					assetFiles[asset.Src] = fileName
-				}
+				hasError = s.FetchImageAssets(tIndex, cIndex, clip, useCache)
 			case TitleAssetType: // Nothing to do
 			default:
 				fmt.Println("Unhandled asset type", typeAsset.String())
