@@ -45,8 +45,10 @@ type Soundtrack struct {
 
 func (s *Soundtrack) checkEnumValues() error {
 	effectValues := []string{"fadeIn", "fadeOut", "fadeInFadeOut"}
-	if !slices.Contains(effectValues, s.Effect) {
-		return &EnumError{Schema: "Soundtrack", Field: "Effect", Value: s.Effect}
+	if s.Effect != "" {
+		if !slices.Contains(effectValues, s.Effect) {
+			return &EnumError{Schema: "Soundtrack", Field: "Effect", Value: s.Effect}
+		}
 	}
 	if s.Volume < 0 || s.Volume > 1 {
 		return &EnumError{Schema: "Soundtrack", Field: "Volume", Value: s.Volume}
