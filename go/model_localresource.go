@@ -29,6 +29,7 @@ type LocalResource struct {
 }
 
 type LocalResourceTrackInfo struct {
-	Track int
-	Clip  int
+	Track   int
+	Clip    int
+	Handled bool // Temp Property until all resource are handled (this allow fetching without handling)
 }

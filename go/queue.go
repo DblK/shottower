@@ -76,7 +76,7 @@ func (s *ProcessingQueue) CleanCache() {
 func (s *ProcessingQueue) FindSourceClip(trackNumber int, clipNumber int) string {
 	for _, resource := range s.LocalResources {
 		for _, used := range resource.Used {
-			if used.Track == trackNumber && used.Clip == clipNumber {
+			if used.Track == trackNumber && used.Clip == clipNumber && used.Handled {
 				return resource.LocalURL
 			}
 		}
@@ -186,6 +186,7 @@ func (s *ProcessingQueue) GenerateParameters(queue *RenderQueue) []string {
 func (s *ProcessingQueue) FetchSrcAssets(trackNumber int, clipNumber int, clip Clip, useCache bool, typeAsset interface{}) bool {
 	var hasError bool
 
+	var assetHandled bool
 	var assetSrc string
 	switch GetAssetType(typeAsset) { // nolint:exhaustive
 	case ImageAssetType:
@@ -194,6 +195,7 @@ func (s *ProcessingQueue) FetchSrcAssets(trackNumber int, clipNumber int, clip C
 	case VideoAssetType:
 		asset := clip.Asset.(*VideoAsset)
 		assetSrc = asset.Src
+		assetHandled = true
 	case AudioAssetType:
 		asset := clip.Asset.(*AudioAsset)
 		assetSrc = asset.Src
@@ -236,8 +238,9 @@ func (s *ProcessingQueue) FetchSrcAssets(trackNumber int, clipNumber int, clip C
 		s.LocalResources[assetSrc].Used = append(
 			s.LocalResources[assetSrc].Used,
 			&LocalResourceTrackInfo{
-				Track: trackNumber,
-				Clip:  clipNumber,
+				Track:   trackNumber,
+				Clip:    clipNumber,
+				Handled: assetHandled,
 			})
 	}
 

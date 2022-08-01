@@ -179,9 +179,9 @@ func (s *Clip) ToFFMPEG(FFMPEGCommand FFMPEGCommand, sourceClip int, trackNumber
 			audioEffects = append(audioEffects, FFMPEGCommand.ClipAudioDelay(sourceClip, trackNumber, currentClip, s.Start*1000))
 		}
 
-	case ImageAssetType:
-		handled = true
-		effects = append(effects, FFMPEGCommand.ClipImage(sourceClip, trackNumber, currentClip, 0, s.Length))
+	// case ImageAssetType:
+	// handled = true
+	// effects = append(effects, FFMPEGCommand.ClipImage(sourceClip, trackNumber, currentClip, 0, s.Length))
 	default:
 		fmt.Println("Type not handled for converting to FFMPEG", typeAsset.String())
 	}
