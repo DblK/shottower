@@ -487,7 +487,7 @@ func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) erro
 		var clipNumber = 0
 
 		_ = s.AddTrack(trackNumber)
-		for _, clip := range track.Clips {
+		for iClip, clip := range track.Clips {
 			// for cIndex, clip := range track.Clips {
 			// fmt.Println(cIndex)
 
@@ -502,7 +502,7 @@ func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) erro
 			}
 			// fmt.Println(sourceClip, s.fillerCounter)
 
-			sourceFileName := queue.FindSourceClip(trackNumber, clipNumber)
+			sourceFileName := queue.FindSourceClip(trackNumber, iClip)
 			if sourceFileName != "" {
 				_ = s.AddSource(sourceFileName)
 			}
