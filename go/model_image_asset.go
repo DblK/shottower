@@ -40,6 +40,20 @@ type ImageAsset struct {
 	Crop *Crop `json:"crop,omitempty"`
 }
 
+func NewImageAsset(m map[string]interface{}) *ImageAsset {
+	imageAsset := &ImageAsset{
+		Type: m["type"].(string),
+	}
+
+	if m["src"] != nil {
+		imageAsset.Src = m["src"].(string)
+	}
+	if m["crop"] != nil {
+		imageAsset.Crop = NewCrop(m["crop"].(map[string]interface{}))
+	}
+	return imageAsset
+}
+
 // AssertImageAssetRequired checks if the required fields are not zero-ed
 func AssertImageAssetRequired(obj ImageAsset) error {
 	elements := map[string]interface{}{
