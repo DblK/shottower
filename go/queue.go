@@ -49,6 +49,25 @@ func (s *ProcessingQueue) StartProcessQueue(editAPI EditAPIServicer) {
 	go time.AfterFunc(1*time.Second, func() {
 		s.ProcessQueue(editAPI)
 	})
+
+	go time.AfterFunc(1*time.Hour, func() {
+		s.CleanCache()
+	})
+}
+
+func (s *ProcessingQueue) CleanCache() {
+	for _, resource := range s.LocalResources {
+		if !resource.KeepCache {
+			// TODO: Delete local resource
+			// resource.LocalURL
+
+			s.LocalResources[resource.OriginalURL] = nil
+		}
+	}
+
+	go time.AfterFunc(1*time.Hour, func() {
+		s.CleanCache()
+	})
 }
 
 func (s *ProcessingQueue) FindSourceClip(trackNumber int, clipNumber int) string {
@@ -161,7 +180,7 @@ func (s *ProcessingQueue) GenerateParameters(queue *RenderQueue) []string {
 	return queue.FFMPEGCommand.ToString()
 }
 
-func (s *ProcessingQueue) FetchVideoAssets(trackNumber int, clipNumber int, clip Clip) bool {
+func (s *ProcessingQueue) FetchVideoAssets(trackNumber int, clipNumber int, clip Clip, useCache bool) bool {
 	var hasError bool
 
 	var asset = clip.Asset.(*VideoAsset)
@@ -187,6 +206,7 @@ func (s *ProcessingQueue) FetchVideoAssets(trackNumber int, clipNumber int, clip
 				Downloaded:  time.Now(),
 				OriginalURL: asset.Src,
 				LocalURL:    fileName,
+				KeepCache:   useCache,
 			}
 			s.LocalResources[asset.Src] = localResource
 		}
@@ -210,6 +230,8 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 
 	var hasError bool
 
+	useCache := queue.Data.Timeline.Cache
+
 	for tIndex, track := range queue.Data.Timeline.Tracks {
 		for cIndex, clip := range track.Clips {
 			// fmt.Println(tIndex, cIndex, clip.Asset.Type)
@@ -217,7 +239,7 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 			var typeAsset = GetAssetType(clip.Asset)
 			switch typeAsset { // nolint:exhaustive
 			case VideoAssetType:
-				hasError = s.FetchVideoAssets(tIndex, cIndex, clip)
+				hasError = s.FetchVideoAssets(tIndex, cIndex, clip, useCache)
 
 			// case "image":
 			// 	fmt.Println("Image")

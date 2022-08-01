@@ -54,7 +54,7 @@ At the end of the road this section should either disappear or be full of `Yes` 
 | Timeline | background | Yes ✅ |  |
 | Timeline | fonts | Not yet |  |
 | Timeline | tracks | Yes ✅ |  |
-| Timeline | cache | Not yet |  |
+| Timeline | cache | Yes ✅ |  |
 | Track ✅ | all ✅ | Yes ✅ |  |
 | Clip | asset | Partial 🛠 | Only `VideoAsset` are started |
 | Clip | start | Yes ✅ |  |

@@ -23,6 +23,7 @@ type LocalResource struct {
 	Downloaded  time.Time `json:"downloaded"`
 	OriginalURL string
 	LocalURL    string
+	KeepCache   bool
 
 	Used []*LocalResourceTrackInfo
 }
