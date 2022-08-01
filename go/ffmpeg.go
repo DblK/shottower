@@ -509,7 +509,9 @@ func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) erro
 
 			_ = clip.ToFFMPEG(s, sourceClip, trackNumber, clipNumber)
 
-			sourceClip = sourceClip + 1
+			if sourceFileName != "" {
+				sourceClip = sourceClip + 1
+			}
 			clipNumber = clipNumber + 1
 			lastStart = clip.Start + clip.Length
 		}

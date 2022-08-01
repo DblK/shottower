@@ -188,25 +188,25 @@ func (s *Clip) ToFFMPEG(FFMPEGCommand FFMPEGCommand, sourceClip int, trackNumber
 
 	if !handled {
 		// TODO: Insert yellow image instead for duration (Or Not handled)
-		effects = append(effects, FFMPEGCommand.ClipRaw(sourceClip, trackNumber, currentClip))
-	}
-
-	// Resize clip to ensure concat will work
-	if s.Scale != nil {
-		effects = append(effects, FFMPEGCommand.ClipResize(sourceClip, trackNumber, currentClip, *s.Scale))
-		effects = append(effects, FFMPEGCommand.ClipFillerOverlay(sourceClip, trackNumber, currentClip, s.Position))
+		// effects = append(effects, FFMPEGCommand.ClipRaw(sourceClip, trackNumber, currentClip))
 	} else {
-		effects = append(effects, FFMPEGCommand.ClipResize(sourceClip, trackNumber, currentClip, 1))
-	}
+		// Resize clip to ensure concat will work
+		if s.Scale != nil {
+			effects = append(effects, FFMPEGCommand.ClipResize(sourceClip, trackNumber, currentClip, *s.Scale))
+			effects = append(effects, FFMPEGCommand.ClipFillerOverlay(sourceClip, trackNumber, currentClip, s.Position))
+		} else {
+			effects = append(effects, FFMPEGCommand.ClipResize(sourceClip, trackNumber, currentClip, 1))
+		}
 
-	_ = FFMPEGCommand.AddClip(
-		trackNumber,
-		FFMPEGCommand.ClipMerge(sourceClip, trackNumber, currentClip, effects),
-	)
-	_ = FFMPEGCommand.AddAudioClip(
-		trackNumber,
-		FFMPEGCommand.ClipAudioMerge(sourceClip, trackNumber, currentClip, audioEffects),
-	)
+		_ = FFMPEGCommand.AddClip(
+			trackNumber,
+			FFMPEGCommand.ClipMerge(sourceClip, trackNumber, currentClip, effects),
+		)
+		_ = FFMPEGCommand.AddAudioClip(
+			trackNumber,
+			FFMPEGCommand.ClipAudioMerge(sourceClip, trackNumber, currentClip, audioEffects),
+		)
+	}
 
 	return nil
 }
