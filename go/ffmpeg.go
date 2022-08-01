@@ -621,8 +621,11 @@ func (s *FFMPEG) ToString() []string {
 			aTracks = aTracks + "[atrack" + cast.ToString(i) + "] "
 		}
 	}
-	filterComplex = filterComplex + aTracks +
-		" amix=inputs=" + cast.ToString(len(strings.Split(aTracks, " "))-1) + " [atracks];"
+	// Ensure there is an audio track
+	if aTracks != "" {
+		filterComplex = filterComplex + aTracks +
+			" amix=inputs=" + cast.ToString(len(strings.Split(aTracks, " "))-1) + " [atracks];"
+	}
 
 	// Remove pending ";" if exists
 	if filterComplex[len(filterComplex)-1:] == ";" {
