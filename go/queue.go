@@ -182,14 +182,31 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 					queue.LocalResources = append(queue.LocalResources, fileName)
 					assetFiles[asset.Src] = fileName
 				}
+			case ImageAssetType:
+				var asset = clip.Asset.(*ImageAsset)
+				var fileName = assetFiles[asset.Src]
 
-			// case "image":
-			// 	fmt.Println("Image")
-			// 	if clip.IsFiller {
-			// 		// queue.LocalResources = append(queue.LocalResources, queue.FFMPEGCommand.GenerateFiller(""))
-			// 	} else {
-			// 		fmt.Println("TODO: Download asset")
-			// 	}
+				if fileName == "" {
+					url, _ := url.Parse(asset.Src)
+
+					if url.Scheme == "file" {
+						fileName = asset.Src[7:]
+					} else {
+						var err error
+						fileName, err = s.DownloadFile(asset.Src)
+						if err != nil {
+							fmt.Println("Error while downloading asset", err)
+							hasError = true
+						}
+					}
+				}
+
+				if !hasError {
+					fmt.Println("Asset downloaded: "+asset.Src, fileName)
+					queue.LocalResources = append(queue.LocalResources, fileName)
+					assetFiles[asset.Src] = fileName
+				}
+			case TitleAssetType: // Nothing to do
 			default:
 				fmt.Println("Unhandled asset type", typeAsset.String())
 			}
