@@ -48,4 +48,5 @@ type FFMPEGCommand interface {
 	ToFFMPEG(*RenderQueue, *ProcessingQueue) error
 	GetOutputName() string
 	GetDuration() float32
+	OverlayAllTracks([]string) string
 }

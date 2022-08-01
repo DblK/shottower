@@ -525,7 +525,8 @@ func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) erro
 	return nil
 }
 
-func (s *FFMPEG) OverlayAllTracks() string {
+func (s *FFMPEG) OverlayAllTracks(missingVideoTracks []string) string {
+	fmt.Println(missingVideoTracks, len(missingVideoTracks))
 	// Overlay of all tracks
 	var vTracks = " [bg]"
 	var curOverlayName string
@@ -615,11 +616,17 @@ func (s *FFMPEG) ToString() []string {
 	filterComplex = filterComplex + "[" + cast.ToString(maxSource+addedSources) + "] concat=n=1:v=1,setpts=PTS-STARTPTS,format=yuv420p [bg];"
 
 	// Add all tracks infos
-	for _, track := range s.tracks {
+	var missingVideoTracks []string
+	for i, track := range s.tracks {
 		filterComplex = filterComplex + strings.Join(track.video, " ") + strings.Join(track.audio, " ")
+		trackName := "[vtrack" + cast.ToString(i) + "]"
+		if strings.Index(filterComplex, trackName) == -1 {
+			missingVideoTracks = append(missingVideoTracks, trackName)
+		}
 	}
 
-	filterComplex = filterComplex + s.OverlayAllTracks()
+	// Overlay all video tracks
+	filterComplex = filterComplex + s.OverlayAllTracks(missingVideoTracks)
 
 	// Handle audio tracks
 	var aTracks string
