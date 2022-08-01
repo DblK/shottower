@@ -525,6 +525,29 @@ func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) erro
 	return nil
 }
 
+func (s *FFMPEG) OverlayAllTracks() string {
+	// Overlay of all tracks
+	var vTracks = " [bg]"
+	var curOverlayName string
+	var previousOverlayName string
+
+	// FIXME: Review this loop to have only present loop
+	for i := len(s.tracks) - 1; i >= 0; i-- {
+		curOverlayName = "[overlay" + cast.ToString(math.Abs(cast.ToFloat64(i-(len(s.tracks)-1)))) + "]"
+		if previousOverlayName != "" {
+			vTracks = vTracks + previousOverlayName
+		}
+		vTracks = vTracks + "[vtrack" + cast.ToString(i) + "] overlay=shortest=1:x=0:y=0 "
+		if i == 0 {
+			vTracks = vTracks + "[vtracks];"
+		} else {
+			vTracks = vTracks + curOverlayName + ";"
+		}
+		previousOverlayName = curOverlayName
+	}
+	return vTracks
+}
+
 func (s *FFMPEG) ToString() []string {
 	var parameters = make([]string, 0)
 	if s.defaultParams {
@@ -596,24 +619,7 @@ func (s *FFMPEG) ToString() []string {
 		filterComplex = filterComplex + strings.Join(track.video, " ") + strings.Join(track.audio, " ")
 	}
 
-	// Overlay of all tracks
-	var vTracks = " [bg]"
-	var curOverlayName string
-	var previousOverlayName string
-	for i := len(s.tracks) - 1; i >= 0; i-- {
-		curOverlayName = "[overlay" + cast.ToString(math.Abs(cast.ToFloat64(i-(len(s.tracks)-1)))) + "]"
-		if previousOverlayName != "" {
-			vTracks = vTracks + previousOverlayName
-		}
-		vTracks = vTracks + "[vtrack" + cast.ToString(i) + "] overlay=shortest=1:x=0:y=0 "
-		if i == 0 {
-			vTracks = vTracks + "[vtracks];"
-		} else {
-			vTracks = vTracks + curOverlayName + ";"
-		}
-		previousOverlayName = curOverlayName
-	}
-	filterComplex = filterComplex + vTracks
+	filterComplex = filterComplex + s.OverlayAllTracks()
 
 	// Handle audio tracks
 	var aTracks string
