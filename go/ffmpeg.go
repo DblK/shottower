@@ -633,11 +633,13 @@ func (s *FFMPEG) ToString() []string {
 	}
 	parameters = append(parameters, filterComplex)
 
-	// Map result
+	// Map results
 	parameters = append(parameters, "-map")
 	parameters = append(parameters, "[vtracks]")
-	parameters = append(parameters, "-map")
-	parameters = append(parameters, "[atracks]")
+	if aTracks != "" {
+		parameters = append(parameters, "-map")
+		parameters = append(parameters, "[atracks]")
+	}
 
 	// Handle output
 	parameters = append(parameters, "-s")
