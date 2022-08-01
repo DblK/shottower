@@ -161,6 +161,49 @@ func (s *ProcessingQueue) GenerateParameters(queue *RenderQueue) []string {
 	return queue.FFMPEGCommand.ToString()
 }
 
+func (s *ProcessingQueue) FetchVideoAssets(trackNumber int, clipNumber int, clip Clip) bool {
+	var hasError bool
+
+	var asset = clip.Asset.(*VideoAsset)
+
+	if s.LocalResources[asset.Src] == nil {
+		var fileName string
+		url, _ := url.Parse(asset.Src)
+
+		if url.Scheme == "file" {
+			fileName = asset.Src[7:]
+		} else {
+			var err error
+			fileName, err = s.DownloadFile(asset.Src)
+			if err != nil {
+				fmt.Println("Error while downloading asset", err)
+				hasError = true
+			}
+		}
+
+		if !hasError {
+			fmt.Println("Asset downloaded: "+asset.Src, fileName)
+			localResource := &LocalResource{
+				Downloaded:  time.Now(),
+				OriginalURL: asset.Src,
+				LocalURL:    fileName,
+			}
+			s.LocalResources[asset.Src] = localResource
+		}
+	}
+
+	if !hasError {
+		s.LocalResources[asset.Src].Used = append(
+			s.LocalResources[asset.Src].Used,
+			&LocalResourceTrackInfo{
+				Track: trackNumber,
+				Clip:  clipNumber,
+			})
+	}
+
+	return hasError
+}
+
 func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 	queue.Status = Fetching
 	queue.InternalStatus = Fetching
@@ -174,42 +217,7 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 			var typeAsset = GetAssetType(clip.Asset)
 			switch typeAsset { // nolint:exhaustive
 			case VideoAssetType:
-				var asset = clip.Asset.(*VideoAsset)
-
-				if s.LocalResources[asset.Src] == nil {
-					var fileName string
-					url, _ := url.Parse(asset.Src)
-
-					if url.Scheme == "file" {
-						fileName = asset.Src[7:]
-					} else {
-						var err error
-						fileName, err = s.DownloadFile(asset.Src)
-						if err != nil {
-							fmt.Println("Error while downloading asset", err)
-							hasError = true
-						}
-					}
-
-					if !hasError {
-						fmt.Println("Asset downloaded: "+asset.Src, fileName)
-						localResource := &LocalResource{
-							Downloaded:  time.Now(),
-							OriginalURL: asset.Src,
-							LocalURL:    fileName,
-						}
-						s.LocalResources[asset.Src] = localResource
-					}
-				}
-
-				if !hasError {
-					s.LocalResources[asset.Src].Used = append(
-						s.LocalResources[asset.Src].Used,
-						&LocalResourceTrackInfo{
-							Track: tIndex,
-							Clip:  cIndex,
-						})
-				}
+				hasError = s.FetchVideoAssets(tIndex, cIndex, clip)
 
 			// case "image":
 			// 	fmt.Println("Image")
