@@ -76,7 +76,7 @@ func (s *ProcessingQueue) CleanCache() {
 func (s *ProcessingQueue) FindSourceClip(trackNumber int, clipNumber int) string {
 	for _, resource := range s.LocalResources {
 		for _, used := range resource.Used {
-			if used.Track == trackNumber && used.Clip == clipNumber {
+			if used.Track == trackNumber && used.Clip == clipNumber && used.Handled {
 				return resource.LocalURL
 			}
 		}
@@ -183,21 +183,37 @@ func (s *ProcessingQueue) GenerateParameters(queue *RenderQueue) []string {
 	return queue.FFMPEGCommand.ToString()
 }
 
-func (s *ProcessingQueue) FetchVideoAssets(trackNumber int, clipNumber int, clip Clip, useCache bool) bool {
+func (s *ProcessingQueue) FetchSrcAssets(trackNumber int, clipNumber int, clip Clip, useCache bool, typeAsset interface{}) bool {
 	var hasError bool
 
-	var asset = clip.Asset.(*VideoAsset)
+	var assetHandled bool
+	var assetSrc string
+	switch GetAssetType(typeAsset) { // nolint:exhaustive
+	case ImageAssetType:
+		asset := clip.Asset.(*ImageAsset)
+		assetSrc = asset.Src
+	case VideoAssetType:
+		asset := clip.Asset.(*VideoAsset)
+		assetSrc = asset.Src
+		assetHandled = true
+	case AudioAssetType:
+		asset := clip.Asset.(*AudioAsset)
+		assetSrc = asset.Src
+	case LumaAssetType:
+		asset := clip.Asset.(*LumaAsset)
+		assetSrc = asset.Src
+	}
 
-	if s.LocalResources[asset.Src] == nil {
+	if s.LocalResources[assetSrc] == nil {
 		var fileName string
 		var remote bool
-		url, _ := url.Parse(asset.Src)
+		url, _ := url.Parse(assetSrc)
 
 		if url.Scheme == "file" {
-			fileName = asset.Src[7:]
+			fileName = assetSrc[7:]
 		} else {
 			var err error
-			fileName, err = s.DownloadFile(asset.Src)
+			fileName, err = s.DownloadFile(assetSrc)
 			if err != nil {
 				fmt.Println("Error while downloading asset", err)
 				hasError = true
@@ -206,24 +222,25 @@ func (s *ProcessingQueue) FetchVideoAssets(trackNumber int, clipNumber int, clip
 		}
 
 		if !hasError {
-			fmt.Println("Asset downloaded: "+asset.Src, fileName)
+			fmt.Println("Asset downloaded: "+assetSrc, fileName)
 			localResource := &LocalResource{
 				Downloaded:       time.Now(),
-				OriginalURL:      asset.Src,
+				OriginalURL:      assetSrc,
 				LocalURL:         fileName,
 				KeepCache:        useCache,
 				IsRemoteResource: remote,
 			}
-			s.LocalResources[asset.Src] = localResource
+			s.LocalResources[assetSrc] = localResource
 		}
 	}
 
 	if !hasError {
-		s.LocalResources[asset.Src].Used = append(
-			s.LocalResources[asset.Src].Used,
+		s.LocalResources[assetSrc].Used = append(
+			s.LocalResources[assetSrc].Used,
 			&LocalResourceTrackInfo{
-				Track: trackNumber,
-				Clip:  clipNumber,
+				Track:   trackNumber,
+				Clip:    clipNumber,
+				Handled: assetHandled,
 			})
 	}
 
@@ -245,15 +262,15 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 			var typeAsset = GetAssetType(clip.Asset)
 			switch typeAsset { // nolint:exhaustive
 			case VideoAssetType:
-				hasError = s.FetchVideoAssets(tIndex, cIndex, clip, useCache)
-
-			// case "image":
-			// 	fmt.Println("Image")
-			// 	if clip.IsFiller {
-			// 		// queue.LocalResources = append(queue.LocalResources, queue.FFMPEGCommand.GenerateFiller(""))
-			// 	} else {
-			// 		fmt.Println("TODO: Download asset")
-			// 	}
+				hasError = s.FetchSrcAssets(tIndex, cIndex, clip, useCache, &VideoAsset{})
+			case ImageAssetType:
+				hasError = s.FetchSrcAssets(tIndex, cIndex, clip, useCache, &ImageAsset{})
+			case TitleAssetType: // Nothing to do
+			case HTMLAssetType: // Nothing to do
+			case AudioAssetType:
+				hasError = s.FetchSrcAssets(tIndex, cIndex, clip, useCache, &AudioAsset{})
+			case LumaAssetType:
+				hasError = s.FetchSrcAssets(tIndex, cIndex, clip, useCache, &LumaAsset{})
 			default:
 				fmt.Println("Unhandled asset type", typeAsset.String())
 			}

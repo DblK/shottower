@@ -26,6 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package openapi
 
+import "github.com/spf13/cast"
+
 // HTMLAsset - The HTMLAsset clip type lets you create text based layout and formatting using HTML and CSS. You can also set the height and width of a bounding box for the HTML content to sit within. Text and elements will wrap within the bounding box.
 type HTMLAsset struct {
 
@@ -49,6 +51,32 @@ type HTMLAsset struct {
 
 	// Place the HTML in one of nine predefined positions within the HTML area. <ul>   <li>`top` - top (center)</li>   <li>`topRight` - top right</li>   <li>`right` - right (center)</li>   <li>`bottomRight` - bottom right</li>   <li>`bottom` - bottom (center)</li>   <li>`bottomLeft` - bottom left</li>   <li>`left` - left (center)</li>   <li>`topLeft` - top left</li>   <li>`center` - center</li> </ul>
 	Position string `json:"position,omitempty"`
+}
+
+func NewHTMLAsset(m map[string]interface{}) *HTMLAsset {
+	hAsset := &HTMLAsset{
+		Type: m["type"].(string),
+	}
+
+	if m["html"] != nil {
+		hAsset.HTML = m["html"].(string)
+	}
+	if m["css"] != nil {
+		hAsset.CSS = m["css"].(string)
+	}
+	if m["width"] != nil {
+		hAsset.Width = cast.ToInt32(m["width"].(float64))
+	}
+	if m["height"] != nil {
+		hAsset.Height = cast.ToInt32(m["height"].(float64))
+	}
+	if m["background"] != nil {
+		hAsset.Background = m["background"].(string)
+	}
+	if m["position"] != nil {
+		hAsset.Position = m["position"].(string)
+	}
+	return hAsset
 }
 
 // AssertHTMLAssetRequired checks if the required fields are not zero-ed

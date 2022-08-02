@@ -21,10 +21,10 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"strings"
 
 	"github.com/spf13/cast"
+	"golang.org/x/exp/slices"
 )
 
 type FFMPEGSource struct {
@@ -289,6 +289,10 @@ func (s *FFMPEG) computeOverlayPosition(position string) string {
 	if position == "" {
 		return "x=0:y:0"
 	}
+	if strings.Contains(position, ":") {
+		return position
+	}
+
 	var x = "(main_w-overlay_w)/2"
 	var y = "(main_h-overlay_h)/2"
 
@@ -331,6 +335,19 @@ func (s *FFMPEG) ClipTrim(sourceClip int, trackNumber int, clipNumber int, start
 		":end=" +
 		cast.ToString(length) +
 		", setpts=PTS-STARTPTS " + s.trackName("video", trackNumber, clipNumber, -1) + ";"
+}
+
+func (s *FFMPEG) ClipCropOverlayPosition(cropInfos *Crop) string {
+	return "x=main_w*" + cast.ToString(cropInfos.Left) + ":y=main_h*" + cast.ToString(cropInfos.Top)
+}
+
+func (s *FFMPEG) ClipCrop(sourceClip int, trackNumber int, clipNumber int, cropInfos *Crop) string {
+	return "[" +
+		cast.ToString(sourceClip) +
+		":v] crop=in_w-" + cast.ToString(cropInfos.Left) + "*in_w-" + cast.ToString(cropInfos.Right) + "*in_w:" +
+		"in_h-" + cast.ToString(cropInfos.Top) + "*in_h-" + cast.ToString(cropInfos.Bottom) + "*in_h:" +
+		cast.ToString(cropInfos.Left) + "*in_w:" + cast.ToString(cropInfos.Top) + "*in_h " +
+		s.trackName("video", trackNumber, clipNumber, -1) + ";"
 }
 
 func (s *FFMPEG) ClipResize(sourceClip int, trackNumber int, clipNumber int, scaleRatio float32) string {
@@ -509,7 +526,9 @@ func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) erro
 
 			_ = clip.ToFFMPEG(s, sourceClip, trackNumber, clipNumber)
 
-			sourceClip = sourceClip + 1
+			if sourceFileName != "" {
+				sourceClip = sourceClip + 1
+			}
 			clipNumber = clipNumber + 1
 			lastStart = clip.Start + clip.Length
 		}
@@ -521,6 +540,36 @@ func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) erro
 	}
 
 	return nil
+}
+
+func (s *FFMPEG) OverlayAllTracks(missingVideoTracks []string) string {
+	// Overlay of all tracks
+	var vTracks = " [bg]"
+	var curOverlayName string
+	var previousOverlayName string
+
+	var availableTracks []string
+	for i := len(s.tracks) - 1; i >= 0; i-- {
+		if !slices.Contains(missingVideoTracks, "[vtrack"+cast.ToString(i)+"]") {
+			availableTracks = append(availableTracks, cast.ToString(i))
+		}
+	}
+
+	for i := 0; i <= len(availableTracks)-1; i++ {
+		curOverlayName = "[overlay" + cast.ToString(i) + "]"
+		if previousOverlayName != "" {
+			vTracks = vTracks + previousOverlayName
+		}
+		vTracks = vTracks + "[vtrack" + cast.ToString(availableTracks[i]) + "] overlay=shortest=1:x=0:y=0 "
+		if i == len(availableTracks)-1 {
+			vTracks = vTracks + "[vtracks];"
+		} else {
+			vTracks = vTracks + curOverlayName + ";"
+		}
+		previousOverlayName = curOverlayName
+	}
+
+	return vTracks
 }
 
 func (s *FFMPEG) ToString() []string {
@@ -590,28 +639,17 @@ func (s *FFMPEG) ToString() []string {
 	filterComplex = filterComplex + "[" + cast.ToString(maxSource+addedSources) + "] concat=n=1:v=1,setpts=PTS-STARTPTS,format=yuv420p [bg];"
 
 	// Add all tracks infos
-	for _, track := range s.tracks {
+	var missingVideoTracks []string
+	for i, track := range s.tracks {
 		filterComplex = filterComplex + strings.Join(track.video, " ") + strings.Join(track.audio, " ")
+		trackName := "[vtrack" + cast.ToString(i) + "]"
+		if !strings.Contains(filterComplex, trackName) {
+			missingVideoTracks = append(missingVideoTracks, trackName)
+		}
 	}
 
-	// Overlay of all tracks
-	var vTracks = " [bg]"
-	var curOverlayName string
-	var previousOverlayName string
-	for i := len(s.tracks) - 1; i >= 0; i-- {
-		curOverlayName = "[overlay" + cast.ToString(math.Abs(cast.ToFloat64(i-(len(s.tracks)-1)))) + "]"
-		if previousOverlayName != "" {
-			vTracks = vTracks + previousOverlayName
-		}
-		vTracks = vTracks + "[vtrack" + cast.ToString(i) + "] overlay=shortest=1:x=0:y=0 "
-		if i == 0 {
-			vTracks = vTracks + "[vtracks];"
-		} else {
-			vTracks = vTracks + curOverlayName + ";"
-		}
-		previousOverlayName = curOverlayName
-	}
-	filterComplex = filterComplex + vTracks
+	// Overlay all video tracks
+	filterComplex = filterComplex + s.OverlayAllTracks(missingVideoTracks)
 
 	// Handle audio tracks
 	var aTracks string
@@ -633,11 +671,13 @@ func (s *FFMPEG) ToString() []string {
 	}
 	parameters = append(parameters, filterComplex)
 
-	// Map result
+	// Map results
 	parameters = append(parameters, "-map")
 	parameters = append(parameters, "[vtracks]")
-	parameters = append(parameters, "-map")
-	parameters = append(parameters, "[atracks]")
+	if aTracks != "" {
+		parameters = append(parameters, "-map")
+		parameters = append(parameters, "[atracks]")
+	}
 
 	// Handle output
 	parameters = append(parameters, "-s")

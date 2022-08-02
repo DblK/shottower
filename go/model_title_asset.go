@@ -50,7 +50,36 @@ type TitleAsset struct {
 	// Place the title in one of nine predefined positions of the viewport. <ul>   <li>`top` - top (center)</li>   <li>`topRight` - top right</li>   <li>`right` - right (center)</li>   <li>`bottomRight` - bottom right</li>   <li>`bottom` - bottom (center)</li>   <li>`bottomLeft` - bottom left</li>   <li>`left` - left (center)</li>   <li>`topLeft` - top left</li>   <li>`center` - center</li> </ul>
 	Position string `json:"position,omitempty"`
 
-	Offset Offset `json:"offset,omitempty"`
+	Offset *Offset `json:"offset,omitempty"`
+}
+
+func NewTitleAsset(m map[string]interface{}) *TitleAsset {
+	titleAsset := &TitleAsset{
+		Type: m["type"].(string),
+	}
+
+	if m["text"] != nil {
+		titleAsset.Text = m["text"].(string)
+	}
+	if m["style"] != nil {
+		titleAsset.Style = m["style"].(string)
+	}
+	if m["color"] != nil {
+		titleAsset.Color = m["color"].(string)
+	}
+	if m["size"] != nil {
+		titleAsset.Size = m["size"].(string)
+	}
+	if m["background"] != nil {
+		titleAsset.Background = m["background"].(string)
+	}
+	if m["position"] != nil {
+		titleAsset.Position = m["position"].(string)
+	}
+	if m["offset"] != nil {
+		titleAsset.Offset = NewOffset(m["offset"].(map[string]interface{}))
+	}
+	return titleAsset
 }
 
 // AssertTitleAssetRequired checks if the required fields are not zero-ed
@@ -65,7 +94,7 @@ func AssertTitleAssetRequired(obj TitleAsset) error {
 		}
 	}
 
-	if err := AssertOffsetRequired(&obj.Offset); err != nil {
+	if err := AssertOffsetRequired(obj.Offset); err != nil {
 		return err
 	}
 	return nil

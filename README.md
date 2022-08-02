@@ -68,11 +68,8 @@ At the end of the road this section should either disappear or be full of `Yes` 
 | Clip | filter | Not yet |  |
 | Clip | opacity | Not yet |  |
 | Clip | transform | Not yet |  |
-| Clip [`VideoAsset`] | src | Yes ✅ |  |
-| Clip [`VideoAsset`] | trim | Yes ✅ |  |
-| Clip [`VideoAsset`] | volume | Yes ✅ |  |
-| Clip [`VideoAsset`] | crop | Not yet |  |
-| Clip [`ImageAsset`] | src | Partial 🛠 |  |
+| Clip [`VideoAsset`] | all ✅ | Yes ✅ |  |
+| Clip [`ImageAsset`] | src | Partial 🛠 | Download asset only |
 | Clip [`ImageAsset`] | crop | Not yet |  |
 | Output | format | Partial 🛠 | Only `mp4` at the moment  |
 | Output | resolution | Yes ✅ |  |

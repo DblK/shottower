@@ -26,6 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package openapi
 
+import "github.com/spf13/cast"
+
 // AudioAsset - The AudioAsset is used to add sound effects and audio at specific intervals on the timeline. The src must be a publicly accessible URL to an audio resource such  as an mp3 file.
 type AudioAsset struct {
 
@@ -43,6 +45,26 @@ type AudioAsset struct {
 
 	// The effect to apply to the audio asset <ul>   <li>`fadeIn` - fade volume in only</li>   <li>`fadeOut` - fade volume out only</li>   <li>`fadeInFadeOut` - fade volume in and out</li> </ul>
 	Effect string `json:"effect,omitempty"`
+}
+
+func NewAudioAsset(m map[string]interface{}) *AudioAsset {
+	audioAsset := &AudioAsset{
+		Type: m["type"].(string),
+	}
+
+	if m["src"] != nil {
+		audioAsset.Src = m["src"].(string)
+	}
+	if m["trim"] != nil {
+		audioAsset.Trim = cast.ToFloat32(m["trim"].(float64))
+	}
+	if m["volume"] != nil {
+		audioAsset.Volume = cast.ToFloat32(m["volume"].(float64))
+	}
+	if m["effect"] != nil {
+		audioAsset.Effect = m["effect"].(string)
+	}
+	return audioAsset
 }
 
 // AssertAudioAssetRequired checks if the required fields are not zero-ed

@@ -64,6 +64,16 @@ func NewAsset(typeAsset string, obj map[string]interface{}) interface{} {
 	switch typeAsset {
 	case "video":
 		return NewVideoAsset(obj)
+	case "image":
+		return NewImageAsset(obj)
+	case "title":
+		return NewTitleAsset(obj)
+	case "html":
+		return NewHTMLAsset(obj)
+	case "audio":
+		return NewAudioAsset(obj)
+	case "luma":
+		return NewLumaAsset(obj)
 	}
 
 	return nil
@@ -93,6 +103,16 @@ func AssertAssetRequired(obj interface{}) error {
 	switch GetAssetType(obj) { // nolint:exhaustive
 	case VideoAssetType:
 		return AssertVideoAssetRequired(obj.(VideoAsset))
+	case ImageAssetType:
+		return AssertImageAssetRequired(obj.(ImageAsset))
+	case TitleAssetType:
+		return AssertTitleAssetRequired(obj.(TitleAsset))
+	case HTMLAssetType:
+		return AssertHTMLAssetRequired(obj.(HTMLAsset))
+	case AudioAssetType:
+		return AssertAudioAssetRequired(obj.(AudioAsset))
+	case LumaAssetType:
+		return AssertLumaAssetRequired(obj.(LumaAsset))
 	}
 	return nil
 }
