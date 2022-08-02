@@ -25,6 +25,8 @@ type FFMPEGCommand interface {
 	CloseTrack(int) error
 	AddClip(int, string) error
 	ClipTrim(int, int, int, float32, float32) string
+	ClipCrop(int, int, int, *Crop) string
+	ClipCropOverlayPosition(cropInfos *Crop) string
 	ClipImage(int, int, int, float32, float32) string
 	ClipMerge(int, int, int, []string) string
 	ClipRaw(int, int, int) string

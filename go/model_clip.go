@@ -154,29 +154,38 @@ func (s *Clip) checkEnumValues() error {
 func (s *Clip) ToFFMPEG(FFMPEGCommand FFMPEGCommand, sourceClip int, trackNumber int, currentClip int) error {
 	var effects []string
 	var audioEffects []string
-	var handled bool
 
 	var typeAsset = GetAssetType(s.Asset)
 	switch typeAsset { // nolint:exhaustive
 	case VideoAssetType:
 		var currentAsset = s.Asset.(*VideoAsset)
 
+		// v1. Burn
 		if currentAsset.Subtitle != nil {
 			effects = append(effects, FFMPEGCommand.ClipSubtitleBurn(sourceClip, trackNumber, currentClip, currentAsset.Subtitle.Index))
 		}
+		// v2. Trim
 		if currentAsset.Trim != 0 {
-			handled = true
 			effects = append(effects, FFMPEGCommand.ClipTrim(sourceClip, trackNumber, currentClip, currentAsset.Trim, currentAsset.Trim+s.Length))
+
+			// a1. Trim
 			if currentAsset.Volume != 0 {
 				audioEffects = append(audioEffects, FFMPEGCommand.ClipAudioTrim(sourceClip, trackNumber, currentClip, currentAsset.Trim, currentAsset.Trim+s.Length))
 			}
 		} else {
-			handled = true
 			effects = append(effects, FFMPEGCommand.ClipTrim(sourceClip, trackNumber, currentClip, 0, s.Length))
 		}
+
+		// a2. Volume + Timing
 		if currentAsset.Volume != 0 {
 			audioEffects = append(audioEffects, FFMPEGCommand.ClipAudioVolume(sourceClip, trackNumber, currentClip, currentAsset.Volume))
 			audioEffects = append(audioEffects, FFMPEGCommand.ClipAudioDelay(sourceClip, trackNumber, currentClip, s.Start*1000))
+		}
+
+		// v3. Crop
+		if currentAsset.Crop != nil {
+			effects = append(effects, FFMPEGCommand.ClipCrop(sourceClip, trackNumber, currentClip, currentAsset.Crop))
+			effects = append(effects, FFMPEGCommand.ClipFillerOverlay(sourceClip, trackNumber, currentClip, FFMPEGCommand.ClipCropOverlayPosition(currentAsset.Crop)))
 		}
 
 	// case ImageAssetType:
@@ -186,27 +195,22 @@ func (s *Clip) ToFFMPEG(FFMPEGCommand FFMPEGCommand, sourceClip int, trackNumber
 		fmt.Println("Type not handled for converting to FFMPEG", typeAsset.String())
 	}
 
-	if !handled {
-		// TODO: Insert yellow image instead for duration (Or Not handled)
-		// effects = append(effects, FFMPEGCommand.ClipRaw(sourceClip, trackNumber, currentClip))
+	// Resize clip to ensure concat will work
+	if s.Scale != nil {
+		effects = append(effects, FFMPEGCommand.ClipResize(sourceClip, trackNumber, currentClip, *s.Scale))
+		effects = append(effects, FFMPEGCommand.ClipFillerOverlay(sourceClip, trackNumber, currentClip, s.Position))
 	} else {
-		// Resize clip to ensure concat will work
-		if s.Scale != nil {
-			effects = append(effects, FFMPEGCommand.ClipResize(sourceClip, trackNumber, currentClip, *s.Scale))
-			effects = append(effects, FFMPEGCommand.ClipFillerOverlay(sourceClip, trackNumber, currentClip, s.Position))
-		} else {
-			effects = append(effects, FFMPEGCommand.ClipResize(sourceClip, trackNumber, currentClip, 1))
-		}
-
-		_ = FFMPEGCommand.AddClip(
-			trackNumber,
-			FFMPEGCommand.ClipMerge(sourceClip, trackNumber, currentClip, effects),
-		)
-		_ = FFMPEGCommand.AddAudioClip(
-			trackNumber,
-			FFMPEGCommand.ClipAudioMerge(sourceClip, trackNumber, currentClip, audioEffects),
-		)
+		effects = append(effects, FFMPEGCommand.ClipResize(sourceClip, trackNumber, currentClip, 1))
 	}
+
+	_ = FFMPEGCommand.AddClip(
+		trackNumber,
+		FFMPEGCommand.ClipMerge(sourceClip, trackNumber, currentClip, effects),
+	)
+	_ = FFMPEGCommand.AddAudioClip(
+		trackNumber,
+		FFMPEGCommand.ClipAudioMerge(sourceClip, trackNumber, currentClip, audioEffects),
+	)
 
 	return nil
 }

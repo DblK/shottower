@@ -289,6 +289,10 @@ func (s *FFMPEG) computeOverlayPosition(position string) string {
 	if position == "" {
 		return "x=0:y:0"
 	}
+	if strings.Contains(position, ":") {
+		return position
+	}
+
 	var x = "(main_w-overlay_w)/2"
 	var y = "(main_h-overlay_h)/2"
 
@@ -331,6 +335,19 @@ func (s *FFMPEG) ClipTrim(sourceClip int, trackNumber int, clipNumber int, start
 		":end=" +
 		cast.ToString(length) +
 		", setpts=PTS-STARTPTS " + s.trackName("video", trackNumber, clipNumber, -1) + ";"
+}
+
+func (s *FFMPEG) ClipCropOverlayPosition(cropInfos *Crop) string {
+	return "x=main_w*" + cast.ToString(cropInfos.Left) + ":y=main_h*" + cast.ToString(cropInfos.Top)
+}
+
+func (s *FFMPEG) ClipCrop(sourceClip int, trackNumber int, clipNumber int, cropInfos *Crop) string {
+	return "[" +
+		cast.ToString(sourceClip) +
+		":v] crop=in_w-" + cast.ToString(cropInfos.Left) + "*in_w-" + cast.ToString(cropInfos.Right) + "*in_w:" +
+		"in_h-" + cast.ToString(cropInfos.Top) + "*in_h-" + cast.ToString(cropInfos.Bottom) + "*in_h:" +
+		cast.ToString(cropInfos.Left) + "*in_w:" + cast.ToString(cropInfos.Top) + "*in_h " +
+		s.trackName("video", trackNumber, clipNumber, -1) + ";"
 }
 
 func (s *FFMPEG) ClipResize(sourceClip int, trackNumber int, clipNumber int, scaleRatio float32) string {
