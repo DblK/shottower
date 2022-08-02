@@ -69,6 +69,9 @@ issues:
       text: "string `video` has"
     - linters:
         - goconst
+      text: "string `audio` has"
+    - linters:
+        - goconst
       text: "string `unknown` has"
   include:
     # - EXC0002

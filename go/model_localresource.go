@@ -19,17 +19,17 @@ package openapi
 
 import "time"
 
-type RenderQueue struct {
-	// The id of the render task in UUID format.
-	ID string `json:"id"`
+type LocalResource struct {
+	Downloaded       time.Time `json:"downloaded"`
+	OriginalURL      string
+	LocalURL         string
+	KeepCache        bool
+	IsRemoteResource bool
+	Used             []*LocalResourceTrackInfo
+}
 
-	Created time.Time `json:"created"`
-	Updated time.Time `json:"updated"`
-
-	Data     Edit `json:"data"`
-	Status   RenderResponseStatus
-	FileName string
-
-	InternalStatus RenderResponseStatus
-	FFMPEGCommand  FFMPEGCommand
+type LocalResourceTrackInfo struct {
+	Track   int
+	Clip    int
+	Handled bool // Temp Property until all resource are handled (this allow fetching without handling)
 }

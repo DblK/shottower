@@ -25,6 +25,8 @@ type FFMPEGCommand interface {
 	CloseTrack(int) error
 	AddClip(int, string) error
 	ClipTrim(int, int, int, float32, float32) string
+	ClipCrop(int, int, int, *Crop) string
+	ClipCropOverlayPosition(cropInfos *Crop) string
 	ClipImage(int, int, int, float32, float32) string
 	ClipMerge(int, int, int, []string) string
 	ClipRaw(int, int, int) string
@@ -45,8 +47,9 @@ type FFMPEGCommand interface {
 	GetResolution() string
 	GenerateFiller(string) string
 	GenerateBackground() string
-	ToFFMPEG(*RenderQueue) error
+	ToFFMPEG(*RenderQueue, *ProcessingQueue) error
 	GetOutputName() string
 	GetDuration() float32
 	HasYoutubeDestination() error
+	OverlayAllTracks([]string) string
 }

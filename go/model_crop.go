@@ -32,16 +32,16 @@ import "github.com/spf13/cast"
 type Crop struct {
 
 	// Crop from the top of the asset
-	Top float32 `json:"top,omitempty"`
+	Top float32 `json:"top"`
 
 	// Crop from the bottom of the asset
-	Bottom float32 `json:"bottom,omitempty"`
+	Bottom float32 `json:"bottom"`
 
 	// Crop from the left of the asset
-	Left float32 `json:"left,omitempty"`
+	Left float32 `json:"left"`
 
 	// Crop from the left of the asset
-	Right float32 `json:"right,omitempty"`
+	Right float32 `json:"right"`
 }
 
 func NewCrop(m map[string]interface{}) *Crop {
