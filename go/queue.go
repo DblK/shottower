@@ -84,10 +84,8 @@ func (s *ProcessingQueue) FindSourceClip(trackNumber int, clipNumber int) string
 	return ""
 }
 
-func (s *ProcessingQueue) ProcessQueue(editAPI EditAPIServicer) {
+func (s *ProcessingQueue) checkAndTakeJob(editAPI EditAPIServicer) {
 	var queue = editAPI.GetQueue()
-	fmt.Println("ProcessQueue (pending:", len(editAPI.GetQueuePending()), ") ", len(queue))
-
 	if len(queue) != 0 && s.currentQueue == nil {
 		if len(editAPI.GetQueuePending()) != 0 {
 			s.currentQueue = editAPI.GetQueuePending()[0]
@@ -105,39 +103,80 @@ func (s *ProcessingQueue) ProcessQueue(editAPI EditAPIServicer) {
 			go s.FetchAssets(s.currentQueue)
 		}
 	}
+}
 
-	if s.currentQueue != nil {
-		fmt.Println(s.currentQueue.Status.String())
+func (s *ProcessingQueue) processingRender() {
+	fmt.Println(s.currentQueue.Status.String())
 
-		if s.currentQueue.InternalStatus == Fetched {
-			params := s.GenerateParameters(s.currentQueue)
-			s.currentQueue.Updated = time.Now()
-
-			// Launch Rendering
-			// fmt.Println(params)
-			go s.ExecuteFFMpeg(params)
+	if s.currentQueue.InternalStatus == Fetched {
+		// Optimize output for youtube
+		for _, destination := range s.currentQueue.Data.Output.Destinations {
+			if GetDestinationProvider(destination) == YoutubeDestinationType {
+				_ = s.currentQueue.FFMPEGCommand.HasYoutubeDestination()
+			}
 		}
 
-		if s.currentQueue.InternalStatus == Rendered {
-			s.currentQueue.Status = Saving
-			s.currentQueue.InternalStatus = Saving
-			s.currentQueue.FileName = s.currentQueue.FFMPEGCommand.GetOutputName()
-		}
+		params := s.GenerateParameters(s.currentQueue)
+		s.currentQueue.Updated = time.Now()
 
-		if s.currentQueue.InternalStatus == Saving {
-			// FIXME: Pass through Saving status at some point
+		// Launch Rendering
+		// fmt.Println(params)
+		go s.ExecuteFFMpeg(params)
+	}
+
+	if s.currentQueue.InternalStatus == Rendered {
+		s.currentQueue.Status = Saving
+		s.currentQueue.InternalStatus = Saving
+		s.currentQueue.FileName = s.currentQueue.FFMPEGCommand.GetOutputName()
+	}
+
+	if s.currentQueue.InternalStatus == Saving {
+		if s.currentQueue.Data.Output.Destinations != nil {
+			go s.SendToDestinations(s.currentQueue.Data.Output.Destinations, s.currentQueue.FileName)
+		} else {
 			s.currentQueue.Status = Done
 			s.currentQueue.InternalStatus = Done
 		}
+	}
 
-		if s.currentQueue.InternalStatus == Failed || s.currentQueue.InternalStatus == Done {
-			s.currentQueue = nil
-		}
+	if s.currentQueue.InternalStatus == Failed || s.currentQueue.InternalStatus == Done {
+		s.currentQueue = nil
+	}
+}
+
+func (s *ProcessingQueue) ProcessQueue(editAPI EditAPIServicer) {
+	var queue = editAPI.GetQueue()
+	fmt.Println("ProcessQueue (pending:", len(editAPI.GetQueuePending()), ") ", len(queue))
+
+	s.checkAndTakeJob(editAPI)
+
+	if s.currentQueue != nil {
+		s.processingRender()
 	}
 
 	go time.AfterFunc(1*time.Second, func() {
 		s.ProcessQueue(editAPI)
 	})
+}
+
+func (s *ProcessingQueue) SendToDestinations(destinations []interface{}, fileName string) {
+	for _, destination := range destinations {
+		provider := GetDestinationProvider(destination)
+		switch provider { // nolint:exhaustive
+		case YoutubeDestinationType:
+			fmt.Println("sending to youtube", fileName)
+			fmt.Println(destination)
+		case MuxDestinationType:
+			// TODO: Do it later
+			// fmt.Println("sending to mux", fileName)
+			// fmt.Println(destination)
+		default:
+			fmt.Println("Destination not handled", provider)
+		}
+	}
+
+	s.currentQueue.Status = Done
+	s.currentQueue.InternalStatus = Done
 }
 
 func (s *ProcessingQueue) ExecuteFFMpeg(params []string) {

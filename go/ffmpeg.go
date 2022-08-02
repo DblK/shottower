@@ -37,18 +37,19 @@ type FFMPEGTrack struct {
 }
 
 type FFMPEG struct {
-	src                  []FFMPEGSource
-	defaultParams        bool
-	tracks               []FFMPEGTrack
-	size                 Size
-	format               string
-	fps                  float32
-	hasOverlay           bool
-	backgroundColor      string
-	overlayFillerCounter int
-	fillerCounter        int
-	outputName           string
-	duration             float32
+	src                   []FFMPEGSource
+	defaultParams         bool
+	tracks                []FFMPEGTrack
+	size                  Size
+	format                string
+	fps                   float32
+	hasOverlay            bool
+	backgroundColor       string
+	overlayFillerCounter  int
+	fillerCounter         int
+	outputName            string
+	duration              float32
+	hasYoutubeDestination bool
 }
 
 func NewFFMPEGCommand() FFMPEGCommand {
@@ -154,6 +155,11 @@ func (s *FFMPEG) ClipAudioMerge(sourceClip int, trackNumber int, clipNumber int,
 	// fmt.Println("ClipAudioMerge", clipEffect)
 	// fmt.Println("---")
 	return clipEffect
+}
+
+func (s *FFMPEG) HasYoutubeDestination() error {
+	s.hasYoutubeDestination = true
+	return nil
 }
 
 func (s *FFMPEG) SetOutputFormat(format string) error {
@@ -695,6 +701,12 @@ func (s *FFMPEG) ToString() []string {
 	// FIXME: Deprecated field (fps_mode??)
 	parameters = append(parameters, "-vsync") // https://stackoverflow.com/questions/18064604/frame-rate-very-high-for-a-muxer-not-efficiently-supporting-it
 	parameters = append(parameters, "2")
+
+	// Help youtube to re-encode before upload complete (https://trac.ffmpeg.org/wiki/Encode/H.264)
+	if s.hasYoutubeDestination {
+		parameters = append(parameters, "-movflags")
+		parameters = append(parameters, "+faststart")
+	}
 
 	var outputName = s.generateOutputName()
 

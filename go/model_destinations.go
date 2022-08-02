@@ -26,11 +26,59 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package openapi
 
+import (
+	"reflect"
+)
+
+type DestinationProviderType int64
+
+const (
+	MuxDestinationType DestinationProviderType = iota
+	YoutubeDestinationType
+	UnknownDestinationType
+)
+
+func (s DestinationProviderType) String() string {
+	switch s { // nolint:exhaustive
+	case MuxDestinationType:
+		return "mux"
+	case YoutubeDestinationType:
+		return "youtube"
+
+	default:
+		return "unknown"
+	}
+}
+
 func NewDestination(provider string, obj map[string]interface{}) interface{} {
-	switch provider {
+	switch provider { // nolint:exhaustive
 	case "mux":
 		return NewMuxDestination(obj)
+	case "youtube":
+		return NewYoutubeDestination(obj)
 	}
 
+	return nil
+}
+
+func GetDestinationProvider(destination interface{}) DestinationProviderType {
+	switch reflect.TypeOf(destination).String() {
+	case "*openapi.MuxDestination":
+		return MuxDestinationType
+	case "*openapi.YoutubeDestination":
+		return YoutubeDestinationType
+	default:
+		return UnknownDestinationType
+	}
+}
+
+// AssertDestinationsRequired checks if the required fields are not zero-ed
+func AssertDestinationsRequired(obj interface{}) error {
+	switch GetDestinationProvider(obj) { // nolint:exhaustive
+	case YoutubeDestinationType:
+		return AssertYoutubeDestinationRequired(obj.(*YoutubeDestination))
+	case MuxDestinationType:
+		return AssertMuxDestinationRequired(obj.(*MuxDestination))
+	}
 	return nil
 }

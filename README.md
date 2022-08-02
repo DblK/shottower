@@ -40,8 +40,8 @@ If you would like to sponsor features, bugs or prioritization, reach out to one 
 * 😎 Allow to use local file from `url` filed (`file:///Users/dblk/clips/my_asset`)
 * 😎 Add an endpoint `/dl/{version}/renders/:id` to download renders (instead of cdn/s3)
 * 😎 Add other value in resolution (`360`, `480`, `540`, `720`) all with default `25 fps`.
+* 😎 Add destination to Youtube
 * [`Planned`] Allow to use ftp file from `url` filed (`ftp://user:password@dblk.org/mypath/my_asset`)
-* [`Planned`] Add destination to Youtube
 
 ### Shotstack implementation progress
 
@@ -82,7 +82,7 @@ At the end of the road this section should either disappear or be full of `Yes` 
 | Output | range | Not yet |  |
 | Output | poster | Not yet |  |
 | Output | thumbnail | Not yet |  |
-| Output | destinations | Not yet |  |
+| Output | destinations | Partial 🛠 | `shotstack` won't be implemented. |
 
 #### Endpoint implementation
 

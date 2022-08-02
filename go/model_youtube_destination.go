@@ -26,39 +26,52 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package openapi
 
-// MuxDestinationOptions - Pass additional options to control how Mux processes video. Currently supports playback policy option.
-type MuxDestinationOptions struct {
+// YoutubeDestination - Send rendered videos to [Youtube](https://www.youtube.com/) video hosting and streaming service. Add the `youtube` destination provider to send the output video to Youtube. Youtube credentials are required and added inside Options for now in the request.
+type YoutubeDestination struct {
 
-	// Sets the Mux `playback_policy` option. Value is an array of strings - use `public`, `signed`, or both.
-	PlaybackPolicy []string `json:"playbackPolicy,omitempty"`
+	// The destination to send rendered assets to - set to `youtube` for Youtube.
+	Provider string `json:"provider"`
+
+	Options YoutubeDestinationOptions `json:"options,omitempty"`
 }
 
-func NewMuxDestinationOptions(obj map[string]interface{}) *MuxDestinationOptions {
-	options := &MuxDestinationOptions{}
+func NewYoutubeDestination(obj map[string]interface{}) *YoutubeDestination {
+	destination := &YoutubeDestination{
+		Provider: obj["provider"].(string),
+	}
 
-	if obj["playbackPolicy"] != nil {
-		policy := obj["playbackPolicy"].([]interface{})
-		for _, i := range policy {
-			options.PlaybackPolicy = append(options.PlaybackPolicy, i.(string))
+	if obj["options"] != nil {
+		destination.Options = *NewYoutubeDestinationOptions(obj["options"].(map[string]interface{}))
+	}
+
+	return destination
+}
+
+// AssertYoutubeDestinationRequired checks if the required fields are not zero-ed
+func AssertYoutubeDestinationRequired(obj *YoutubeDestination) error {
+	elements := map[string]interface{}{
+		"provider": obj.Provider,
+	}
+	for name, el := range elements {
+		if isZero := IsZeroValue(el); isZero {
+			return &RequiredError{Field: name}
 		}
 	}
 
-	return options
-}
-
-// AssertMuxDestinationOptionsRequired checks if the required fields are not zero-ed
-func AssertMuxDestinationOptionsRequired(obj MuxDestinationOptions) error {
+	if err := AssertYoutubeDestinationOptionsRequired(obj.Options); err != nil {
+		return err
+	}
 	return nil
 }
 
-// AssertRecurseMuxDestinationOptionsRequired recursively checks if required fields are not zero-ed in a nested slice.
-// Accepts only nested slice of MuxDestinationOptions (e.g. [][]MuxDestinationOptions), otherwise ErrTypeAssertionError is thrown.
-func AssertRecurseMuxDestinationOptionsRequired(objSlice interface{}) error {
+// AssertRecurseYoutubeDestinationRequired recursively checks if required fields are not zero-ed in a nested slice.
+// Accepts only nested slice of YoutubeDestination (e.g. [][]YoutubeDestination), otherwise ErrTypeAssertionError is thrown.
+func AssertRecurseYoutubeDestinationRequired(objSlice interface{}) error {
 	return AssertRecurseInterfaceRequired(objSlice, func(obj interface{}) error {
-		aMuxDestinationOptions, ok := obj.(MuxDestinationOptions)
+		aYoutubeDestination, ok := obj.(YoutubeDestination)
 		if !ok {
 			return ErrTypeAssertionError
 		}
-		return AssertMuxDestinationOptionsRequired(aMuxDestinationOptions)
+		return AssertYoutubeDestinationRequired(&aYoutubeDestination)
 	})
 }

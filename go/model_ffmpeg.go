@@ -50,5 +50,6 @@ type FFMPEGCommand interface {
 	ToFFMPEG(*RenderQueue, *ProcessingQueue) error
 	GetOutputName() string
 	GetDuration() float32
+	HasYoutubeDestination() error
 	OverlayAllTracks([]string) string
 }

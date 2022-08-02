@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  description: "Shottowwer is the open source version of Shotstack which is a video, image and audio editing service that allows\
+  description: "Shottower is the open source version of Shotstack which is a video, image and audio editing service that allows\
     \ for the automated\ngeneration of videos, images and audio using JSON and a RESTful\
     \ API.\n\nYou arrange and configure an edit and POST it to the API which will\
     \ render your media and provide a file \nlocation when complete.\n\nFor more details\
@@ -1906,12 +1906,14 @@ components:
       anyOf:
       - $ref: '#/components/schemas/ShotstackDestination'
       - $ref: '#/components/schemas/MuxDestination'
+      - $ref: '#/components/schemas/YoutubeDestination'
       description: "A destination is a location where output files can be sent to\
         \ for serving or hosting. By default all rendered assets are automatically\
         \ sent to the  [Shotstack hosting destination](https://shotstack.io/docs/guide/serving-assets/hosting).\
         \ You can add other destinations to send assets to. The following destinations\
         \ are available:\n  <ul>\n    <li><a href=\"#tocs_shotstackdestination\">DestinationShotstack</a></li>\n\
-        \    <li><a href=\"#tocs_muxdestination\">DestinationMux</a></li>\n  </ul>"
+        \    <li><a href=\"#tocs_muxdestination\">DestinationMux</a></li>\n
+        \    <li><a href=\"#tocs_youtubedestination\">DestinationYoutube</a></li>\n</ul>"
       discriminator:
         propertyName: destinations
       type: object
@@ -1965,6 +1967,39 @@ components:
             - signed
             type: string
           type: array
+    YoutubeDestination:
+      description: "Send rendered videos to [Youtube](https://www.youtube.com/) video\
+        \ hosting and streaming service. Add the `youtube` destination provider to send\
+        \ the output video to Youtube. Youtube credentials are required and added inside Options for now in the\
+        \ request."
+      properties:
+        provider:
+          default: youtube
+          description: The destination to send rendered assets to - set to `youtube` for
+            Youtube.
+          example: youtube
+          type: string
+        options:
+          $ref: '#/components/schemas/YoutubeDestinationOptions'
+      required:
+      - provider
+      type: object
+    YoutubeDestinationOptions:
+      description: Pass additional options to control how Youtube processes video.
+      properties:
+        title:
+          description: The title of the video
+          type: string
+          maxLength: 100
+        description:
+          description: The description of the video
+          type: string
+          maxLength: 5000
+        privacy:
+          description: The privacy of the video
+          enum:
+          - unlisted
+          type: string
     Template:
       description: "A template is a saved [Edit](#tocs_edit) than can be loaded and\
         \ re-used."

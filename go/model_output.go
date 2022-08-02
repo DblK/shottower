@@ -69,7 +69,7 @@ type Output struct {
 	Destinations []interface{} `json:"destinations,omitempty"`
 }
 
-func NewOutput(data map[string]interface{}) *Output {
+func NewOutput(data map[string]interface{}, destinations []interface{}) *Output {
 	output := &Output{
 		Format: data["format"].(string),
 	}
@@ -106,13 +106,7 @@ func NewOutput(data map[string]interface{}) *Output {
 		*output.Thumbnail = *NewThumbnail(data["thumbnail"].(map[string]interface{}))
 	}
 
-	if data["destinations"] != nil {
-		for _, dest := range data["destinations"].([]map[string]interface{}) {
-			var provider = dest["provider"].(string)
-			destination := NewDestination(provider, dest)
-			output.Destinations = append(output.Destinations, destination)
-		}
-	}
+	output.Destinations = destinations
 	return output
 }
 
@@ -123,7 +117,16 @@ func (s *Output) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	*s = *NewOutput(obj)
+	var destinations []interface{}
+	if obj["destinations"] != nil {
+		for _, dest := range obj["destinations"].([]interface{}) {
+			var provider = dest.(map[string]interface{})["provider"].(string)
+			destination := NewDestination(provider, dest.(map[string]interface{}))
+			destinations = append(destinations, destination)
+		}
+	}
+
+	*s = *NewOutput(obj, destinations)
 
 	return nil
 }
@@ -193,11 +196,13 @@ func AssertOutputRequired(obj *Output) error {
 	if err := AssertThumbnailRequired(obj.Thumbnail); err != nil {
 		return err
 	}
-	// for i := range obj.Destinations {
-	// 	if err := AssertDestinationsRequired(&obj.Destinations[i]); err != nil {
-	// 		return err
-	// 	}
-	// }
+	if obj.Destinations != nil {
+		for i := range obj.Destinations {
+			if err := AssertDestinationsRequired(obj.Destinations[i]); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
