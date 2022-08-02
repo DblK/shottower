@@ -21,10 +21,10 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"strings"
 
 	"github.com/spf13/cast"
+	"golang.org/x/exp/slices"
 )
 
 type FFMPEGSource struct {
@@ -526,26 +526,32 @@ func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) erro
 }
 
 func (s *FFMPEG) OverlayAllTracks(missingVideoTracks []string) string {
-	fmt.Println(missingVideoTracks, len(missingVideoTracks))
 	// Overlay of all tracks
 	var vTracks = " [bg]"
 	var curOverlayName string
 	var previousOverlayName string
 
-	// FIXME: Review this loop to have only present loop
+	var availableTracks []string
 	for i := len(s.tracks) - 1; i >= 0; i-- {
-		curOverlayName = "[overlay" + cast.ToString(math.Abs(cast.ToFloat64(i-(len(s.tracks)-1)))) + "]"
+		if !slices.Contains(missingVideoTracks, "[vtrack"+cast.ToString(i)+"]") {
+			availableTracks = append(availableTracks, cast.ToString(i))
+		}
+	}
+
+	for i := 0; i <= len(availableTracks)-1; i++ {
+		curOverlayName = "[overlay" + cast.ToString(i) + "]"
 		if previousOverlayName != "" {
 			vTracks = vTracks + previousOverlayName
 		}
-		vTracks = vTracks + "[vtrack" + cast.ToString(i) + "] overlay=shortest=1:x=0:y=0 "
-		if i == 0 {
+		vTracks = vTracks + "[vtrack" + cast.ToString(availableTracks[i]) + "] overlay=shortest=1:x=0:y=0 "
+		if i == len(availableTracks)-1 {
 			vTracks = vTracks + "[vtracks];"
 		} else {
 			vTracks = vTracks + curOverlayName + ";"
 		}
 		previousOverlayName = curOverlayName
 	}
+
 	return vTracks
 }
 
@@ -620,7 +626,7 @@ func (s *FFMPEG) ToString() []string {
 	for i, track := range s.tracks {
 		filterComplex = filterComplex + strings.Join(track.video, " ") + strings.Join(track.audio, " ")
 		trackName := "[vtrack" + cast.ToString(i) + "]"
-		if strings.Index(filterComplex, trackName) == -1 {
+		if !strings.Contains(filterComplex, trackName) {
 			missingVideoTracks = append(missingVideoTracks, trackName)
 		}
 	}

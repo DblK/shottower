@@ -136,7 +136,7 @@ var _ = Describe("Ffmpeg", func() {
 			Expect(ff.GetResolution()).To(Equal("30x20"))
 		})
 	})
-	FDescribe("OverlayAllTracks", func() {
+	Describe("OverlayAllTracks", func() {
 		var ff openapi.FFMPEGCommand
 		var missingVideoTracks []string
 		BeforeEach(func() {
