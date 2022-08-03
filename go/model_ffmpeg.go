@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package openapi
 
 type FFMPEGCommand interface {
-	AddSource(string) error
+	AddSource(string, bool) error
 	AddDefaultParams() error
 	ToString() []string
 	AddTrack(int) error

@@ -188,11 +188,19 @@ func (s *Clip) ToFFMPEG(FFMPEGCommand FFMPEGCommand, sourceClip int, trackNumber
 			effects = append(effects, FFMPEGCommand.ClipFillerOverlay(sourceClip, trackNumber, currentClip, FFMPEGCommand.ClipCropOverlayPosition(currentAsset.Crop)))
 		}
 
-	// case ImageAssetType:
-	// handled = true
-	// effects = append(effects, FFMPEGCommand.ClipImage(sourceClip, trackNumber, currentClip, 0, s.Length))
+	case ImageAssetType:
+		var currentAsset = s.Asset.(*ImageAsset)
+		effects = append(effects, FFMPEGCommand.ClipImage(sourceClip, trackNumber, currentClip, 0, s.Length))
+
+		if currentAsset.Crop != nil {
+			effects = append(effects, FFMPEGCommand.ClipCrop(sourceClip, trackNumber, currentClip, currentAsset.Crop))
+			effects = append(effects, FFMPEGCommand.ClipFillerOverlay(sourceClip, trackNumber, currentClip, FFMPEGCommand.ClipCropOverlayPosition(currentAsset.Crop)))
+		} else {
+			effects = append(effects, FFMPEGCommand.ClipFillerOverlay(sourceClip, trackNumber, currentClip, "topLeft"))
+		}
 	default:
 		fmt.Println("Type not handled for converting to FFMPEG", typeAsset.String())
+		return nil
 	}
 
 	// Resize clip to ensure concat will work
