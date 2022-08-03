@@ -192,6 +192,7 @@ func (s *ProcessingQueue) FetchSrcAssets(trackNumber int, clipNumber int, clip C
 	case ImageAssetType:
 		asset := clip.Asset.(*ImageAsset)
 		assetSrc = asset.Src
+		assetHandled = true
 	case VideoAssetType:
 		asset := clip.Asset.(*VideoAsset)
 		assetSrc = asset.Src

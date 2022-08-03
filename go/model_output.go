@@ -44,7 +44,7 @@ type Output struct {
 	Resolution string `json:"resolution,omitempty"`
 
 	// The aspect ratio (shape) of the video or image. Useful for social media output formats. Options are: <ul>   <li>`16:9` - regular landscape/horizontal aspect ratio (default)</li>   <li>`9:16` - vertical/portrait aspect ratio</li>   <li>`1:1` - square aspect ratio</li>   <li>`4:5` - short vertical/portrait aspect ratio</li>   <li>`4:3` - legacy TV aspect ratio</li> </ul>
-	AspectRatio string `json:"aspectRatio,omitempty"`
+	AspectRatio string `json:"aspectRatio,omitempty" default:"16:9"`
 
 	Size *Size `json:"size,omitempty"`
 

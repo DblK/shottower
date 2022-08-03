@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cast"
@@ -28,7 +29,8 @@ import (
 )
 
 type FFMPEGSource struct {
-	path string
+	path     string
+	needLoop bool
 }
 
 type FFMPEGTrack struct {
@@ -60,9 +62,10 @@ func (s *FFMPEG) AddDefaultParams() error {
 	return nil
 }
 
-func (s *FFMPEG) AddSource(fileName string) error {
+func (s *FFMPEG) AddSource(fileName string, needLoop bool) error {
 	var newSource = &FFMPEGSource{
-		path: fileName,
+		path:     fileName,
+		needLoop: needLoop,
 	}
 	s.src = append(s.src, *newSource)
 	return nil
@@ -487,6 +490,11 @@ func (s *FFMPEG) generateOutputName() string {
 	return file.Name()
 }
 
+func (s *FFMPEG) isImagePath(path string) bool {
+	imageValues := []string{"jpeg", "jpg", "png", "bmp", "gif"}
+	return slices.Contains(imageValues, filepath.Ext(path)[1:])
+}
+
 func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) error {
 	_ = s.AddDefaultParams()
 	_ = s.SetOutputFormat(renderQueue.Data.Output.Format)
@@ -494,6 +502,7 @@ func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) erro
 		_ = s.SetOutputFps(*renderQueue.Data.Output.Fps)
 	}
 	_ = s.SetDefaultBackground(renderQueue.Data.Timeline.Background)
+	// _ = s.SetOutputAspectRatio(renderQueue.Data.Output.AspectRatio)
 
 	// Handle Sources
 	var sourceClip = 0
@@ -521,7 +530,7 @@ func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) erro
 
 			sourceFileName := queue.FindSourceClip(trackNumber, iClip)
 			if sourceFileName != "" {
-				_ = s.AddSource(sourceFileName)
+				_ = s.AddSource(sourceFileName, s.isImagePath(sourceFileName))
 			}
 
 			_ = clip.ToFFMPEG(s, sourceClip, trackNumber, clipNumber)
@@ -585,6 +594,10 @@ func (s *FFMPEG) ToString() []string {
 	// Handle source
 	var maxSource = len(s.src) - 1
 	for _, source := range s.src {
+		if source.needLoop {
+			parameters = append(parameters, "-loop")
+			parameters = append(parameters, "1")
+		}
 		parameters = append(parameters, "-i")
 		parameters = append(parameters, source.path)
 	}
