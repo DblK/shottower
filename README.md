@@ -69,8 +69,15 @@ At the end of the road this section should either disappear or be full of `Yes` 
 | Clip | opacity | Not yet |  |
 | Clip | transform | Not yet |  |
 | Clip [`VideoAsset`] | all ✅ | Yes ✅ |  |
-| Clip [`ImageAsset`] | src | Partial 🛠 | Download asset only |
-| Clip [`ImageAsset`] | crop | Not yet |  |
+| Clip [`ImageAsset`] | all ✅ | Yes ✅ |  |
+| Clip [`TitleAsset`] | all | Not yet |  |
+| Clip [`HTMLAsset`] | all | Not yet |  |
+| Clip [`AudioAsset`] | src | Partial 🛠 | Download asset only |
+| Clip [`AudioAsset`] | trim | Not yet |  |
+| Clip [`AudioAsset`] | volume | Not yet |  |
+| Clip [`AudioAsset`] | effect | Not yet |  |
+| Clip [`LumaAsset`] | src | Partial 🛠 | Download asset only |
+| Clip [`LumaAsset`] | trim | Not yet |  |
 | Output | format | Partial 🛠 | Only `mp4` at the moment  |
 | Output | resolution | Yes ✅ |  |
 | Output | aspectRatio | Not yet |  |
