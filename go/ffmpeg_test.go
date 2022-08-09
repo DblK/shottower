@@ -148,20 +148,20 @@ var _ = Describe("Ffmpeg", func() {
 
 			_ = ff.AddTrack(0)
 			res := ff.OverlayAllTracks(missingVideoTracks)
-			Expect(res).To(Equal(" [bg][vtrack0] overlay=shortest=1:x=0:y=0 [vtracks];"))
+			Expect(res).To(Equal(" [bg][vtrack0] overlay=shortest=0:x=0:y=0 [vtracks];"))
 		})
 		It("Overlay one handled tracks out of two", func() {
 			missingVideoTracks = append(missingVideoTracks, "[vtrack0]")
 			_ = ff.AddTrack(0)
 			_ = ff.AddTrack(1)
 			res := ff.OverlayAllTracks(missingVideoTracks)
-			Expect(res).To(Equal(" [bg][vtrack1] overlay=shortest=1:x=0:y=0 [vtracks];"))
+			Expect(res).To(Equal(" [bg][vtrack1] overlay=shortest=0:x=0:y=0 [vtracks];"))
 		})
 		It("Overlay two handled tracks out of two", func() {
 			_ = ff.AddTrack(0)
 			_ = ff.AddTrack(1)
 			res := ff.OverlayAllTracks(missingVideoTracks)
-			Expect(res).To(Equal(" [bg][vtrack1] overlay=shortest=1:x=0:y=0 [overlay0];[overlay0][vtrack0] overlay=shortest=1:x=0:y=0 [vtracks];"))
+			Expect(res).To(Equal(" [bg][vtrack1] overlay=shortest=0:x=0:y=0 [overlay0];[overlay0][vtrack0] overlay=shortest=0:x=0:y=0 [vtracks];"))
 		})
 		It("Overlay two handled tracks out of three", func() {
 			missingVideoTracks = append(missingVideoTracks, "[vtrack1]")
@@ -169,7 +169,7 @@ var _ = Describe("Ffmpeg", func() {
 			_ = ff.AddTrack(1)
 			_ = ff.AddTrack(2)
 			res := ff.OverlayAllTracks(missingVideoTracks)
-			Expect(res).To(Equal(" [bg][vtrack2] overlay=shortest=1:x=0:y=0 [overlay0];[overlay0][vtrack0] overlay=shortest=1:x=0:y=0 [vtracks];"))
+			Expect(res).To(Equal(" [bg][vtrack2] overlay=shortest=0:x=0:y=0 [overlay0];[overlay0][vtrack0] overlay=shortest=0:x=0:y=0 [vtracks];"))
 		})
 	})
 	Describe("SetDefaultBackground/GenerateBackground", func() {

@@ -495,6 +495,19 @@ func (s *FFMPEG) isImagePath(path string) bool {
 	return slices.Contains(imageValues, filepath.Ext(path)[1:])
 }
 
+func (s *FFMPEG) computeDuration(timeline Timeline) {
+	var lastStart float32
+
+	for _, track := range timeline.Tracks {
+		for _, clip := range track.Clips {
+			lastStart = clip.Start + clip.Length
+		}
+		if lastStart > s.duration {
+			s.duration = lastStart
+		}
+	}
+}
+
 func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) error {
 	_ = s.AddDefaultParams()
 	_ = s.SetOutputFormat(renderQueue.Data.Output.Format)
@@ -507,6 +520,7 @@ func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) erro
 	// Handle Sources
 	var sourceClip = 0
 	s.fillerCounter = 0
+	s.computeDuration(renderQueue.Data.Timeline)
 
 	for trackNumber, track := range renderQueue.Data.Timeline.Tracks {
 		var lastStart float32
@@ -541,10 +555,13 @@ func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) erro
 			clipNumber = clipNumber + 1
 			lastStart = clip.Start + clip.Length
 		}
-		if lastStart > s.duration {
-			s.duration = lastStart
+		if lastStart < s.duration {
+			// Ensure, we do not need a padding after last clip to match whole timeline
+			_ = s.AddClip(
+				trackNumber,
+				s.ClipFiller(trackNumber, clipNumber, 0, s.duration-lastStart),
+			)
 		}
-		// TODO: Ensure, we do not need a padding after last clip to match whole timeline
 		_ = s.CloseTrack(trackNumber)
 	}
 
@@ -569,7 +586,7 @@ func (s *FFMPEG) OverlayAllTracks(missingVideoTracks []string) string {
 		if previousOverlayName != "" {
 			vTracks = vTracks + previousOverlayName
 		}
-		vTracks = vTracks + "[vtrack" + cast.ToString(availableTracks[i]) + "] overlay=shortest=1:x=0:y=0 "
+		vTracks = vTracks + "[vtrack" + cast.ToString(availableTracks[i]) + "] overlay=shortest=0:x=0:y=0 "
 		if i == len(availableTracks)-1 {
 			vTracks = vTracks + "[vtracks];"
 		} else {
@@ -649,7 +666,7 @@ func (s *FFMPEG) ToString() []string {
 	}
 	// Add background stream
 	addedSources = addedSources + 1
-	filterComplex = filterComplex + "[" + cast.ToString(maxSource+addedSources) + "] concat=n=1:v=1,setpts=PTS-STARTPTS,format=yuv420p [bg];"
+	filterComplex = filterComplex + "[" + cast.ToString(maxSource+addedSources) + "] concat=n=1:v=1,setpts=PTS-STARTPTS,format=yuv420p [bg0]; [bg0] trim=start=0:end=" + cast.ToString(s.duration) + " [bg];"
 
 	// Add all tracks infos
 	var missingVideoTracks []string
