@@ -19,6 +19,7 @@ package openapi
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -27,6 +28,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -166,6 +168,83 @@ func (s *ProcessingQueue) ExecuteFFMpeg(params []string) {
 		// fmt.Println(err)
 	} else {
 		fmt.Println("FFMPEG ended!")
+		fmt.Println(out.String())
+
+		if s.currentQueue.Data.Output.Format == "gif" && s.currentQueue.Data.Output.Quality == "high" {
+			fmt.Println("Generating High quality GIF")
+			var parameters []string
+			parameters, err = s.PrepareGIFSki()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			go s.ExecuteGIFSki(parameters)
+		} else {
+			s.currentQueue.InternalStatus = Rendered
+		}
+	}
+}
+
+func (s *ProcessingQueue) PrepareGIFSki() ([]string, error) {
+	parameters := make([]string, 0)
+	parameters = append(parameters, "-o")
+	parameters = append(parameters, s.currentQueue.FFMPEGCommand.GetOutputName())
+	parameters = append(parameters, "--repeat")
+	repeat := s.currentQueue.FFMPEGCommand.GetOutputRepeat()
+	if repeat {
+		parameters = append(parameters, "0")
+	} else {
+		parameters = append(parameters, "-1")
+	}
+
+	err := filepath.Walk(os.TempDir(), func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil // nolint: nilerr
+		}
+		if info.IsDir() && path != os.TempDir() {
+			return filepath.SkipDir
+		}
+		if strings.Contains(info.Name(), s.currentQueue.ID) {
+			parameters = append(parameters, path)
+		}
+		return nil
+	})
+
+	if len(parameters) == 2 {
+		return make([]string, 0), errors.New("impossible to detect PNGs to create GIF")
+	}
+
+	return parameters, err
+}
+
+func (s *ProcessingQueue) ExecuteGIFSki(params []string) {
+	s.currentQueue.InternalStatus = Rendering
+	cmd := exec.Command("gifski", params...)
+
+	// FIXME: Dev debug
+	// fmt.Println(strings.Join(cmd.Args, "||"))
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	var outErr bytes.Buffer
+	cmd.Stderr = &outErr
+
+	// Dev debug
+	// cmd.Stdout = os.Stdout
+	// cmd.Stderr = os.Stderr
+	// fmt.Println(cmd.String())
+
+	err := cmd.Run()
+
+	s.currentQueue.Updated = time.Now()
+	if err != nil {
+		fmt.Println(outErr.String())
+		s.currentQueue.Status = Failed
+		s.currentQueue.InternalStatus = Failed
+		log.Fatal(err)
+		// fmt.Println(err)
+	} else {
+		fmt.Println("GIFSki ended!")
 		fmt.Println(out.String())
 		s.currentQueue.InternalStatus = Rendered
 	}
