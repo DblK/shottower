@@ -79,14 +79,14 @@ At the end of the road this section should either disappear or be full of `Yes` 
 | Clip [`AudioAsset`] | effect | Not yet |  |
 | Clip [`LumaAsset`] | src | Partial 🛠 | Download asset only |
 | Clip [`LumaAsset`] | trim | Not yet |  |
-| Output | format | Partial 🛠 | Only `mp4` at the moment  |
+| Output | format | Partial 🛠 | Only `mp4` & `gif` at the moment  |
 | Output | resolution | Yes ✅ |  |
 | Output | aspectRatio | Not yet |  |
 | Output | size | Yes ✅ |  |
 | Output | fps | Yes ✅ |  |
 | Output | scaleTo | Not yet |  |
 | Output | quality | Yes ✅ |  |
-| Output | repeat | Not yet |  |
+| Output | repeat | Yes ✅ |  |
 | Output | range | Not yet |  |
 | Output | poster | Not yet |  |
 | Output | thumbnail | Not yet |  |
