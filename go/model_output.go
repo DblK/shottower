@@ -154,7 +154,7 @@ func (s *Output) checkEnumValues() error {
 		return &EnumError{Schema: "Output", Field: "ScaleTo", Value: s.ScaleTo}
 	}
 
-	qualityValues := []string{"low", "medium", "high"}
+	qualityValues := []string{"lowest", "low", "medium", "high", "highest"}
 	if s.Quality != "" && !slices.Contains(qualityValues, s.Quality) {
 		return &EnumError{Schema: "Output", Field: "Quality", Value: s.Quality}
 	}
