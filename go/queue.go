@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -291,7 +290,7 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 }
 
 func (s *ProcessingQueue) DownloadFile(url string) (string, error) {
-	file, err := ioutil.TempFile("", "asset*"+filepath.Ext(url))
+	file, err := os.CreateTemp("", "asset*"+filepath.Ext(url))
 	if err != nil {
 		fmt.Println("Error temp file", err)
 		return "", err

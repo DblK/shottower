@@ -29,8 +29,8 @@ package openapi
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -218,7 +218,7 @@ func (c *EditAPIController) PostRender(w http.ResponseWriter, r *http.Request) {
 	if c.debug {
 		queryFile, err := json.MarshalIndent(editParam, "", "  ")
 		if err == nil {
-			_ = ioutil.WriteFile("query.json", queryFile, 0600)
+			_ = os.WriteFile("query.json", queryFile, 0600)
 		}
 	}
 

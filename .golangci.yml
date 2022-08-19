@@ -41,7 +41,6 @@ linters:
     - whitespace
     # - wsl
     - exportloopref
-    - golint
     - gochecknoglobals
   disable:
     - noctx

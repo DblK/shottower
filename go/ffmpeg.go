@@ -20,7 +20,7 @@ package openapi
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -486,7 +486,7 @@ func (s *FFMPEG) CloseTrack(trackNumber int) error {
 }
 
 func (s *FFMPEG) generateOutputName() string {
-	file, err := ioutil.TempFile("", "*."+s.format)
+	file, err := os.CreateTemp("", "*."+s.format)
 	if err != nil {
 		fmt.Println("Error temp file", err)
 		return ""
