@@ -37,14 +37,14 @@ import (
 )
 
 type CallbackResponse struct {
-	Type      string `json:"type,omitempty"`
-	Action    string `json:"action,omitempty"`
-	ID        string `json:"id,omitempty"`
-	Owner     string `json:"owner,omitempty"`
-	Status    string `json:"status,omitempty"`
-	URL       string `json:"url,omitempty"`
-	Error     string `json:"error"`
-	Completed string `json:"completed,omitempty"`
+	Type      string  `json:"type,omitempty"`
+	Action    string  `json:"action,omitempty"`
+	ID        string  `json:"id,omitempty"`
+	Owner     string  `json:"owner,omitempty"`
+	Status    string  `json:"status,omitempty"`
+	URL       string  `json:"url,omitempty"`
+	Error     *string `json:"error"`
+	Completed string  `json:"completed,omitempty"`
 }
 
 type ProcessingQueue struct {
@@ -148,7 +148,7 @@ func (s *ProcessingQueue) ProcessQueue(editAPI EditAPIServicer) {
 			s.currentQueue.Status = Done
 			s.currentQueue.InternalStatus = Done
 
-			go s.ExecuteCallback(s.currentQueue, "", 0)
+			go s.ExecuteCallback(*s.currentQueue, "", 0)
 		}
 
 		if s.currentQueue.InternalStatus == Failed || s.currentQueue.InternalStatus == Done {
@@ -185,7 +185,7 @@ func (s *ProcessingQueue) ExecuteFFMpeg(params []string) {
 		s.currentQueue.Status = Failed
 		s.currentQueue.InternalStatus = Failed
 
-		s.ExecuteCallback(s.currentQueue, "Error with FFMPEG", 0)
+		s.ExecuteCallback(*s.currentQueue, "Error with FFMPEG", 0)
 
 		// log.Fatal(err)
 		fmt.Println(err)
@@ -265,7 +265,7 @@ func (s *ProcessingQueue) ExecuteGIFSki(params []string) {
 		s.currentQueue.Status = Failed
 		s.currentQueue.InternalStatus = Failed
 
-		s.ExecuteCallback(s.currentQueue, "Error with GIFski", 0)
+		s.ExecuteCallback(*s.currentQueue, "Error with GIFski", 0)
 
 		log.Fatal(err)
 		// fmt.Println(err)
@@ -392,7 +392,7 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 		queue.InternalStatus = Failed
 		queue.Status = Failed
 
-		go s.ExecuteCallback(s.currentQueue, "Error while fetching assets", 0)
+		go s.ExecuteCallback(*s.currentQueue, "Error while fetching assets", 0)
 	}
 }
 
@@ -426,12 +426,13 @@ func (s *ProcessingQueue) DownloadFile(url string) (string, error) {
 	return file.Name(), err
 }
 
-func (s *ProcessingQueue) ExecuteCallback(queue *RenderQueue, errorLabel string, retry int) {
+func (s *ProcessingQueue) ExecuteCallback(queue RenderQueue, errorLabel string, retry int) {
 	// See https://shotstack.io/docs/guide/architecting-an-application/webhooks/
 	retryTiming := []int{0, 8, 27, 64, 125, 216, 343, 512, 729, 900}
 
-	fmt.Println("ExecuteCallback: ", retry)
 	if queue.Data.Callback != "" {
+		fmt.Println("ExecuteCallback for", queue.ID, "#", retry)
+
 		response := &CallbackResponse{
 			Type:   "edit",
 			Action: "render",
@@ -441,20 +442,17 @@ func (s *ProcessingQueue) ExecuteCallback(queue *RenderQueue, errorLabel string,
 		}
 		if errorLabel != "" {
 			response.Status = "failed"
-			response.Error = errorLabel
+			response.Error = &errorLabel
 		} else {
 			response.URL = s.config.GetDownloadBaseURL() + "/renders/" + queue.ID
 			response.Completed = queue.Updated.Format("2006-01-02T15:04:05.123Z")
 		}
-
-		fmt.Println("send Payload", response)
 		jsonData, err := json.Marshal(response)
 
 		if err != nil {
 			log.Fatal(err)
 		}
-		resp, err := http.Post("https://shottower.free.beeceptor.com", "application/json", bytes.NewBuffer(jsonData))
-		// resp, err := http.Post(queue.Data.Callback, "application/json", bytes.NewBuffer(jsonData))
+		resp, err := http.Post(queue.Data.Callback, "application/json", bytes.NewBuffer(jsonData))
 
 		// TODO: Add also Timeout 10s
 		if (resp.StatusCode < 200 || resp.StatusCode > 399) && retry < 10 {
@@ -465,14 +463,5 @@ func (s *ProcessingQueue) ExecuteCallback(queue *RenderQueue, errorLabel string,
 				s.ExecuteCallback(queue, errorLabel, newRetry)
 			})
 		}
-
-		// var res map[string]interface{}
-
-		// json.NewDecoder(resp.Body).Decode(&res)
-
-		// fmt.Println(resp)
-		// // fmt.Println(res)
-		// fmt.Println(res["json"])
-		fmt.Println("----")
 	}
 }
