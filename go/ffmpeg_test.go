@@ -123,6 +123,37 @@ var _ = Describe("Ffmpeg", func() {
 			Expect(ff.GetResolution()).To(Equal("1280x720"))
 		})
 	})
+	Describe("SetOutputFormat/SetOutputQuality/GetOutputFormat", func() {
+		var ff openapi.FFMPEGCommand
+		BeforeEach(func() {
+			ff = openapi.NewFFMPEGCommand()
+		})
+
+		Context("Handle mp4 output", func() {
+			BeforeEach(func() {
+				_ = ff.SetOutputFormat("mp4")
+			})
+			DescribeTable("Verify all output quality",
+				func(quality string, qualityPreset string) {
+					_ = ff.SetOutputQuality(quality)
+					parameters := make([]string, 0)
+					parameters, _ = ff.GetOutputFormat(parameters)
+
+					Expect(parameters).To(HaveLen(4))
+					Expect(parameters[0]).To(Equal("-codec:v"))
+					Expect(parameters[1]).To(Equal("libx264"))
+					Expect(parameters[2]).To(Equal("-preset"))
+					Expect(parameters[3]).To(Equal(qualityPreset))
+
+				},
+				Entry("Set quality to 'medium'", "medium", "medium"),
+				Entry("Set quality to 'high'", "high", "slower"),
+				Entry("Set quality to 'highest'", "highest", "veryslow"),
+				Entry("Set quality to 'low'", "low", "faster"),
+				Entry("Set quality to 'lower'", "lower", "ultrafast"),
+			)
+		})
+	})
 	Describe("SetOutputSize", func() {
 		var ff openapi.FFMPEGCommand
 		BeforeEach(func() {

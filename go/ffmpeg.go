@@ -44,6 +44,7 @@ type FFMPEG struct {
 	tracks               []FFMPEGTrack
 	size                 Size
 	format               string
+	quality              string
 	fps                  float32
 	hasOverlay           bool
 	backgroundColor      string
@@ -161,6 +162,11 @@ func (s *FFMPEG) ClipAudioMerge(sourceClip int, trackNumber int, clipNumber int,
 
 func (s *FFMPEG) SetOutputFormat(format string) error {
 	s.format = format
+	return nil
+}
+
+func (s *FFMPEG) SetOutputQuality(quality string) error {
+	s.quality = quality
 	return nil
 }
 
@@ -511,6 +517,7 @@ func (s *FFMPEG) computeDuration(timeline Timeline) {
 func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) error {
 	_ = s.AddDefaultParams()
 	_ = s.SetOutputFormat(renderQueue.Data.Output.Format)
+	_ = s.SetOutputQuality(renderQueue.Data.Output.Quality)
 	if renderQueue.Data.Output.Fps != nil {
 		_ = s.SetOutputFps(*renderQueue.Data.Output.Fps)
 	}
@@ -713,7 +720,7 @@ func (s *FFMPEG) ToString() []string {
 	parameters = append(parameters, "-s")
 	parameters = append(parameters, s.GetResolution())
 
-	parameters, err := s.getOutputFormat(parameters)
+	parameters, err := s.GetOutputFormat(parameters)
 	if err != nil {
 		return make([]string, 0)
 	}
@@ -737,15 +744,24 @@ func (s *FFMPEG) ToString() []string {
 	return parameters
 }
 
-func (s *FFMPEG) getOutputFormat(parameters []string) ([]string, error) {
+func (s *FFMPEG) GetOutputFormat(parameters []string) ([]string, error) {
 	switch s.format {
 	case "mp4":
 		parameters = append(parameters, "-codec:v")
 		parameters = append(parameters, "libx264")
+
 		parameters = append(parameters, "-preset")
-		parameters = append(parameters, "ultrafast") // slow
-		// parameters = append(parameters, "-codec:v")
-		// parameters = append(parameters, "vp9")
+		if s.quality == "high" {
+			parameters = append(parameters, "slower")
+		} else if s.quality == "highest" {
+			parameters = append(parameters, "veryslow")
+		} else if s.quality == "low" {
+			parameters = append(parameters, "faster")
+		} else if s.quality == "lower" {
+			parameters = append(parameters, "ultrafast")
+		} else {
+			parameters = append(parameters, "medium")
+		}
 	default:
 		return make([]string, 0), errors.New("format not handled")
 	}

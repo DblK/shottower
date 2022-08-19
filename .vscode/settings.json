@@ -68,6 +68,7 @@
         "unparam",
         "varcheck",
         "vcodec",
+        "veryslow",
         "videoasset",
         "vsync",
         "vtrack",

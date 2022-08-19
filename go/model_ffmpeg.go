@@ -43,6 +43,8 @@ type FFMPEGCommand interface {
 	SetOutputResolution(string) error
 	SetOutputSize(*int32, *int32) error
 	SetOutputFormat(string) error
+	GetOutputFormat([]string) ([]string, error)
+	SetOutputQuality(string) error
 	SetDefaultBackground(string) error
 	GetResolution() string
 	GenerateFiller(string) string
