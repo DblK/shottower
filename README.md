@@ -57,7 +57,7 @@ At the end of the road this section should either disappear or be full of `Yes` 
 | Timeline | tracks | Yes ✅ |  |
 | Timeline | cache | Yes ✅ |  |
 | Track ✅ | all ✅ | Yes ✅ |  |
-| Clip | asset | Partial 🛠 | Only `VideoAsset` are started |
+| Clip | asset | Partial 🛠 | Only `VideoAsset` & `ImageAsset` are handled |
 | Clip | start | Yes ✅ |  |
 | Clip | length | Yes ✅|  |
 | Clip | fit | Not yet |  |
