@@ -51,6 +51,7 @@ type FFMPEGCommand interface {
 	GenerateBackground() string
 	ToFFMPEG(*RenderQueue, *ProcessingQueue) error
 	GetOutputName() string
+	GetOutputRepeat() bool
 	GetDuration() float32
 	OverlayAllTracks([]string) string
 }

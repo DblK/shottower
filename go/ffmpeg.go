@@ -53,6 +53,7 @@ type FFMPEG struct {
 	outputName           string
 	duration             float32
 	currentID            string
+	repeat               bool
 }
 
 func NewFFMPEGCommand() FFMPEGCommand {
@@ -75,6 +76,10 @@ func (s *FFMPEG) AddSource(fileName string, needLoop bool) error {
 
 func (s *FFMPEG) GetOutputName() string {
 	return s.outputName
+}
+
+func (s *FFMPEG) GetOutputRepeat() bool {
+	return s.repeat
 }
 
 func (s *FFMPEG) GetDuration() float32 {
@@ -163,6 +168,11 @@ func (s *FFMPEG) ClipAudioMerge(sourceClip int, trackNumber int, clipNumber int,
 
 func (s *FFMPEG) SetOutputFormat(format string) error {
 	s.format = format
+	return nil
+}
+
+func (s *FFMPEG) SetOutputRepeat(repeat bool) error {
+	s.repeat = repeat
 	return nil
 }
 
@@ -519,6 +529,7 @@ func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) erro
 	_ = s.AddDefaultParams()
 	_ = s.SetOutputFormat(renderQueue.Data.Output.Format)
 	_ = s.SetOutputQuality(renderQueue.Data.Output.Quality)
+	_ = s.SetOutputRepeat(renderQueue.Data.Output.Repeat)
 	s.currentID = queue.currentQueue.ID
 	if renderQueue.Data.Output.Fps != nil {
 		_ = s.SetOutputFps(*renderQueue.Data.Output.Fps)
@@ -776,9 +787,9 @@ func (s *FFMPEG) GetOutputFormat(parameters []string) ([]string, error) {
 			parameters = append(parameters, "medium")
 		}
 	case "gif":
-		if s.quality != "high" {
+		if s.quality != "high" && !s.repeat {
 			parameters = append(parameters, "-loop")
-			parameters = append(parameters, "0")
+			parameters = append(parameters, "-1")
 		}
 
 	default:

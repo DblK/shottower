@@ -189,6 +189,13 @@ func (s *ProcessingQueue) PrepareGIFSki() ([]string, error) {
 	parameters := make([]string, 0)
 	parameters = append(parameters, "-o")
 	parameters = append(parameters, s.currentQueue.FFMPEGCommand.GetOutputName())
+	parameters = append(parameters, "--repeat")
+	repeat := s.currentQueue.FFMPEGCommand.GetOutputRepeat()
+	if repeat {
+		parameters = append(parameters, "0")
+	} else {
+		parameters = append(parameters, "-1")
+	}
 
 	err := filepath.Walk(os.TempDir(), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
