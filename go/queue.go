@@ -30,16 +30,32 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/DblK/shottower/config"
 )
+
+type CallbackResponse struct {
+	Type      string `json:"type,omitempty"`
+	Action    string `json:"action,omitempty"`
+	ID        string `json:"id,omitempty"`
+	Owner     string `json:"owner,omitempty"`
+	Status    string `json:"status,omitempty"`
+	URL       string `json:"url,omitempty"`
+	Error     string `json:"error"`
+	Completed string `json:"completed,omitempty"`
+}
 
 type ProcessingQueue struct {
 	currentQueue *RenderQueue
 
 	LocalResources map[string]*LocalResource
+	config         config.ShottowerConfiguration
 }
 
-func NewProcessingQueuer() ProcessingQueuer {
-	processingQueue := &ProcessingQueue{}
+func NewProcessingQueuer(cfg config.ShottowerConfiguration) ProcessingQueuer {
+	processingQueue := &ProcessingQueue{
+		config: cfg,
+	}
 	processingQueue.LocalResources = make(map[string]*LocalResource)
 
 	return processingQueue
@@ -130,7 +146,7 @@ func (s *ProcessingQueue) ProcessQueue(editAPI EditAPIServicer) {
 			s.currentQueue.Status = Done
 			s.currentQueue.InternalStatus = Done
 
-			s.ExecuteCallback(s.currentQueue)
+			s.ExecuteCallback(s.currentQueue, "")
 		}
 
 		if s.currentQueue.InternalStatus == Failed || s.currentQueue.InternalStatus == Done {
@@ -167,7 +183,7 @@ func (s *ProcessingQueue) ExecuteFFMpeg(params []string) {
 		s.currentQueue.Status = Failed
 		s.currentQueue.InternalStatus = Failed
 
-		s.ExecuteCallback(s.currentQueue)
+		s.ExecuteCallback(s.currentQueue, "Error with FFMPEG")
 
 		log.Fatal(err)
 		// fmt.Println(err)
@@ -247,7 +263,7 @@ func (s *ProcessingQueue) ExecuteGIFSki(params []string) {
 		s.currentQueue.Status = Failed
 		s.currentQueue.InternalStatus = Failed
 
-		s.ExecuteCallback(s.currentQueue)
+		s.ExecuteCallback(s.currentQueue, "Error with GIFski")
 
 		log.Fatal(err)
 		// fmt.Println(err)
@@ -374,7 +390,7 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 		queue.InternalStatus = Failed
 		queue.Status = Failed
 
-		s.ExecuteCallback(s.currentQueue)
+		s.ExecuteCallback(s.currentQueue, "Error while fetching assets")
 	}
 }
 
@@ -408,9 +424,24 @@ func (s *ProcessingQueue) DownloadFile(url string) (string, error) {
 	return file.Name(), err
 }
 
-func (s *ProcessingQueue) ExecuteCallback(queue *RenderQueue) {
+func (s *ProcessingQueue) ExecuteCallback(queue *RenderQueue, errorLabel string) {
 	fmt.Println("ExecuteCallback")
 	if queue.Data.Callback != "" {
-		fmt.Println("send Payload")
+		response := &CallbackResponse{
+			Type:   "edit",
+			Action: "render",
+			ID:     queue.ID,
+			Owner:  "me",
+			Status: "done",
+			URL:    s.config.GetDownloadBaseURL() + "/renders/" + queue.ID,
+		}
+		if errorLabel != "" {
+			response.Status = "failed"
+			response.Error = errorLabel
+		} else {
+			response.Completed = queue.Updated.Format("2006-01-02T15:04:05.123Z")
+		}
+
+		fmt.Println("send Payload", response)
 	}
 }

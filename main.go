@@ -50,7 +50,7 @@ func main() {
 
 	router := openapi.NewRouter(EditAPIController, ServeAPIController, DownloadAPIController)
 
-	QueueService := openapi.NewProcessingQueuer()
+	QueueService := openapi.NewProcessingQueuer(myConfig)
 	QueueService.StartProcessQueue(EditAPIService)
 
 	log.Fatal(http.ListenAndServe(":4000", router))
