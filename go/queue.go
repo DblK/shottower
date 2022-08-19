@@ -129,6 +129,8 @@ func (s *ProcessingQueue) ProcessQueue(editAPI EditAPIServicer) {
 			// FIXME: Pass through Saving status at some point
 			s.currentQueue.Status = Done
 			s.currentQueue.InternalStatus = Done
+
+			s.ExecuteCallback(s.currentQueue)
 		}
 
 		if s.currentQueue.InternalStatus == Failed || s.currentQueue.InternalStatus == Done {
@@ -164,6 +166,9 @@ func (s *ProcessingQueue) ExecuteFFMpeg(params []string) {
 		fmt.Println(outErr.String())
 		s.currentQueue.Status = Failed
 		s.currentQueue.InternalStatus = Failed
+
+		s.ExecuteCallback(s.currentQueue)
+
 		log.Fatal(err)
 		// fmt.Println(err)
 	} else {
@@ -241,6 +246,9 @@ func (s *ProcessingQueue) ExecuteGIFSki(params []string) {
 		fmt.Println(outErr.String())
 		s.currentQueue.Status = Failed
 		s.currentQueue.InternalStatus = Failed
+
+		s.ExecuteCallback(s.currentQueue)
+
 		log.Fatal(err)
 		// fmt.Println(err)
 	} else {
@@ -365,6 +373,8 @@ func (s *ProcessingQueue) FetchAssets(queue *RenderQueue) {
 	} else {
 		queue.InternalStatus = Failed
 		queue.Status = Failed
+
+		s.ExecuteCallback(s.currentQueue)
 	}
 }
 
@@ -396,4 +406,11 @@ func (s *ProcessingQueue) DownloadFile(url string) (string, error) {
 	// Write the body to file
 	_, err = io.Copy(file, resp.Body)
 	return file.Name(), err
+}
+
+func (s *ProcessingQueue) ExecuteCallback(queue *RenderQueue) {
+	fmt.Println("ExecuteCallback")
+	if queue.Data.Callback != "" {
+		fmt.Println("send Payload")
+	}
 }
