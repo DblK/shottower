@@ -447,17 +447,17 @@ func (s *ProcessingQueue) ExecuteCallback(queue RenderQueue, errorLabel string, 
 			response.URL = s.config.GetDownloadBaseURL() + "/renders/" + queue.ID
 			response.Completed = queue.Updated.Format("2006-01-02T15:04:05.123Z")
 		}
-		jsonData, err := json.Marshal(response)
+		jsonData, errConvert := json.Marshal(response)
 
-		if err != nil {
-			log.Fatal(err)
+		if errConvert != nil {
+			log.Fatal(errConvert)
 		}
-		resp, err := http.Post(queue.Data.Callback, "application/json", bytes.NewBuffer(jsonData))
+		resp, _ := http.Post(queue.Data.Callback, "application/json", bytes.NewBuffer(jsonData))
 
 		// TODO: Add also Timeout 10s
 		if (resp.StatusCode < 200 || resp.StatusCode > 399) && retry < 10 {
 			newRetry := retry + 1
-			fmt.Println("Retry: " + cast.ToString(newRetry))
+			fmt.Println("Retry #" + cast.ToString(newRetry))
 
 			go time.AfterFunc(time.Duration(retryTiming[newRetry])*time.Second, func() {
 				s.ExecuteCallback(queue, errorLabel, newRetry)
