@@ -199,7 +199,7 @@ func (s *ProcessingQueue) PrepareGIFSki() ([]string, error) {
 
 	err := filepath.Walk(os.TempDir(), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return nil
+			return nil // nolint: nilerr
 		}
 		if info.IsDir() && path != os.TempDir() {
 			return filepath.SkipDir
@@ -211,7 +211,7 @@ func (s *ProcessingQueue) PrepareGIFSki() ([]string, error) {
 	})
 
 	if len(parameters) == 2 {
-		return make([]string, 0), errors.New("Impossible to detect PNGs to create GIF")
+		return make([]string, 0), errors.New("impossible to detect PNGs to create GIF")
 	}
 
 	return parameters, err

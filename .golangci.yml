@@ -69,5 +69,11 @@ issues:
     - linters:
         - goconst
       text: "string `audio` has"
+    - linters:
+        - goconst
+      text: "string `gif` has"
+    - linters:
+        - goconst
+      text: "string `high` has"
   include:
     # - EXC0002
