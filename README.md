@@ -91,6 +91,7 @@ At the end of the road this section should either disappear or be full of `Yes` 
 | Output | poster | Not yet |  |
 | Output | thumbnail | Not yet |  |
 | Output | destinations | Not yet |  |
+| callback | | Yes ✅ |  |
 
 #### Endpoint implementation
 
