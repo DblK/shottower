@@ -452,13 +452,20 @@ func (s *ProcessingQueue) ExecuteCallback(queue RenderQueue, errorLabel string, 
 		if errConvert != nil {
 			log.Fatal(errConvert)
 		}
-		resp, err := http.Post(queue.Data.Callback, "application/json", bytes.NewBuffer(jsonData))
+
+		client := http.Client{Timeout: 10 * time.Second}
+
+		resp, err := client.Post(queue.Data.Callback, "application/json", bytes.NewBuffer(jsonData))
+		timeout := false
 		if err != nil {
-			log.Fatal(err)
+			timeout = os.IsTimeout(err)
+			if !timeout {
+				log.Fatal(err)
+			}
+		} else {
+			defer resp.Body.Close()
 		}
-		defer resp.Body.Close()
-		// TODO: Add also Timeout 10s
-		if (resp.StatusCode < 200 || resp.StatusCode > 399) && retry < 10 {
+		if resp == nil || (resp != nil && (resp.StatusCode < 200 || resp.StatusCode > 399 || timeout) && retry < 10) {
 			newRetry := retry + 1
 			fmt.Println("Retry #" + cast.ToString(newRetry))
 
