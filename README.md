@@ -142,9 +142,11 @@ To ensure, the changelog are well generated, please use prefix in your commit me
 And if you `really` need to commit something that is not working `wip` ou `test` are your friends.
 
 ### Install development tools
-* Go 1.18
-* FFMPEG (v5 or up)
+* [Go 1.18](https://go.dev/doc/install)
+* [FFMPEG (v5 or up)](https://ffmpeg.org/download.html)
 * [gifski](https://github.com/ImageOptim/gifski) (For high quality GIF)
+* [ginkgo](https://onsi.github.io/ginkgo/#installing-ginkgo)
+* [golangci-lint](https://golangci-lint.run/usage/install/)
 * (optional) I recommend using [gow](https://github.com/mitranim/gow)
 
 ### Testing and building
