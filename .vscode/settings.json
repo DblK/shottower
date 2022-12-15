@@ -30,6 +30,7 @@
         "godox",
         "gofmt",
         "goimports",
+        "golangci",
         "golint",
         "goreleaser",
         "govet",
