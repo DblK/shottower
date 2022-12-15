@@ -64,7 +64,7 @@ At the end of the road this section should either disappear or be full of `Yes` 
 | Clip | scale | Yes ✅|  |
 | Clip | position | Yes ✅ |  |
 | Clip | offset | Not yet |  |
-| Clip | transition | Not yet |  |
+| Clip | transition | Yes ✅ |  |
 | Clip | effect | Not yet |  |
 | Clip | filter | Not yet |  |
 | Clip | opacity | Not yet |  |
