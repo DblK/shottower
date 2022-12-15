@@ -11,12 +11,12 @@ linters:
     - staticcheck
     - unused
     - gosimple
-    - structcheck # waiting for compatibility with Go 1.18
+    - structcheck # waiting for compatibility with Go 1.19
     - varcheck
     - ineffassign
     - deadcode
     - typecheck
-    - bodyclose # waiting for compatibility with Go 1.18
+    - bodyclose # waiting for compatibility with Go 1.19
     - revive
     - stylecheck
     - gosec
@@ -30,7 +30,7 @@ linters:
     - depguard
     - misspell
     - lll
-    - unparam # waiting for compatibility with Go 1.18
+    - unparam # waiting for compatibility with Go 1.19
     - dogsled
     # - funlen
     - gochecknoinits

@@ -142,7 +142,7 @@ To ensure, the changelog are well generated, please use prefix in your commit me
 And if you `really` need to commit something that is not working `wip` ou `test` are your friends.
 
 ### Install development tools
-* [Go 1.18](https://go.dev/doc/install)
+* [Go 1.19](https://go.dev/doc/install)
 * [FFMPEG (v5 or up)](https://ffmpeg.org/download.html)
 * [gifski](https://github.com/ImageOptim/gifski) (For high quality GIF)
 * [ginkgo](https://onsi.github.io/ginkgo/#installing-ginkgo)
@@ -152,17 +152,17 @@ And if you `really` need to commit something that is not working `wip` ou `test`
 ### Testing and building
 
 To run the tests (solo execution):
-```golang
+```bash
 ginkgo -r --randomize-all --randomize-suites --race --trace -cover
 ```
 
 To run the tests during development:
-```golang
+```bash
 ginkgo watch -r --randomize-all --race --trace
 ```
 
 To build the program:
-```golang
+```bash
 go build
 ```
 
