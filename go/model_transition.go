@@ -51,13 +51,19 @@ func NewTransition(m map[string]interface{}) *Transition {
 }
 
 func (s *Transition) checkEnumValues() error {
-	inValues := []string{"fade", "reveal", "wipeLeft", "wipeRight", "slideLeft", "slideRight", "slideUp", "slideDown", "carouselLeft", "carouselRight", "carouselUp", "carouselDown", "shuffleTopRight", "shuffleRightTop", "shuffleRightBottom", "shuffleBottomRight", "shuffleBottomLeft", "shuffleLeftBottom", "shuffleLeftTop", "zoom"}
-	if s.In != "" && !slices.Contains(inValues, s.In) {
+	values := []string{"fade", "reveal", "wipeLeft", "wipeRight", "slideLeft", "slideRight", "slideUp", "slideDown", "carouselLeft", "carouselRight", "carouselUp", "carouselDown", "shuffleTopRight", "shuffleRightTop", "shuffleRightBottom", "shuffleBottomRight", "shuffleBottomLeft", "shuffleLeftBottom", "shuffleLeftTop", "zoom"}
+	valuesFast := []string{}
+	valuesSlow := []string{}
+	for _, value := range values {
+		valuesFast = append(valuesFast, value+"Fast")
+		valuesSlow = append(valuesSlow, value+"Slow")
+	}
+
+	if s.In != "" && !slices.Contains(values, s.In) && !slices.Contains(valuesFast, s.In) && !slices.Contains(valuesSlow, s.In) {
 		return &EnumError{Schema: "Transition", Field: "In", Value: s.In}
 	}
 
-	outValues := []string{"fade", "reveal", "wipeLeft", "wipeRight", "slideLeft", "slideRight", "slideUp", "slideDown", "carouselLeft", "carouselRight", "carouselUp", "carouselDown", "shuffleTopRight", "shuffleRightTop", "shuffleRightBottom", "shuffleBottomRight", "shuffleBottomLeft", "shuffleLeftBottom", "shuffleLeftTop", "zoom"}
-	if s.Out != "" && !slices.Contains(outValues, s.Out) {
+	if s.Out != "" && !slices.Contains(values, s.Out) && !slices.Contains(valuesFast, s.Out) && !slices.Contains(valuesSlow, s.Out) {
 		return &EnumError{Schema: "Transition", Field: "Out", Value: s.Out}
 	}
 
