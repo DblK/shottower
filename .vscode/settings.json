@@ -64,6 +64,7 @@
         "shottower",
         "STARTPTS",
         "staticcheck",
+        "strack",
         "structcheck",
         "stylecheck",
         "titleasset",

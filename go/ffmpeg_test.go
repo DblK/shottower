@@ -276,4 +276,21 @@ var _ = Describe("Ffmpeg", func() {
 			Expect(res).To(Equal("[1:a] atrim=start=5:end=9.96, asetpts=PTS-STARTPTS [atrack0c1p0];[atrack0c1p0] volume=0.5 [atrack0c1p1];[filler] [atrack0c1p1] amix=inputs=2 [atrack0c1];"))
 		})
 	})
+	Describe("ClipSubtitleBurn", func() {
+		var ff openapi.FFMPEGCommand
+		BeforeEach(func() {
+			ff = openapi.NewFFMPEGCommand()
+			_ = ff.AddSource("/dev/test.mkv", false)
+		})
+
+		It("Should merge subtitle track with video", func() {
+			var sourceClip = 0
+			var trackNumber = 0
+			var clipNumber = 0
+			var index = 0
+
+			res := ff.ClipSubtitleBurn(sourceClip, trackNumber, clipNumber, index)
+			Expect(res).To(Equal("subtitles='/dev/test.mkv':stream_index=0[strack0c0]; [0:v] [strack0c0] overlay [vtrack0c0];"))
+		})
+	})
 })

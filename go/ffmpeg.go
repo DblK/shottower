@@ -548,8 +548,7 @@ func (s *FFMPEG) ToFFMPEG(renderQueue *RenderQueue, queue *ProcessingQueue) erro
 
 		_ = s.AddTrack(trackNumber)
 		for iClip, clip := range track.Clips {
-			// for cIndex, clip := range track.Clips {
-			// fmt.Println(cIndex)
+			// fmt.Println(iClip)
 
 			if clip.Start > lastStart {
 				// fmt.Println("Add filler clip")
