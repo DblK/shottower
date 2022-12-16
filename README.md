@@ -41,6 +41,7 @@ If you would like to sponsor features, bugs or prioritization, reach out to one 
 * 😎 Add an endpoint `/dl/{version}/renders/:id` to download renders (instead of cdn/s3)
 * 😎 Add other values for resolution (`360`, `480`, `540`, `720`) all with default `25 fps`.
 * 😎 Add other values for output quality (`highest`, `lowest`).
+* 😎 Add missing transitions from `ffmpeg` (`fadeBlack`, `fadeWhite`, `distance`, `wipeUp`, `wipeDown`, `smoothLeft`, `smoothRight`, `smoothUp`, `smoothDown`, `circleCrop`, `rectCrop`, `circleClose`, `circleOpen`, `horzClose`, `horzOpen`, `vertClose`, `vertOpen`, `diagBottomLeft`, `diagBottomRight`, `diagTopLeft`, `diagTopRight`, `horizontalLeftSlice`, `horizontalRightSlice`, `verticalUpSlice`, `verticalDownSlice`, `dissolve`, `pixelize`, `radial`, `horizontalBlur`, `wipeTopLeft`, `wipeTopRight`, `wipeBottomLeft`, `wipeBottomRight`, `fadeGrays`, `squeezeVertical`, `squeezeHorizontal`)
 * [`Planned`] Allow to use ftp file from `url` filed (`ftp://user:password@dblk.org/mypath/my_asset`)
 * [`Planned`] Add destination to Youtube
 
@@ -64,7 +65,7 @@ At the end of the road this section should either disappear or be full of `Yes` 
 | Clip | scale | Yes ✅|  |
 | Clip | position | Yes ✅ |  |
 | Clip | offset | Not yet |  |
-| Clip | transition | Yes ✅ |  |
+| Clip | transition | Partial 🛠 | Missing `shuffleXXX` transitions |
 | Clip | effect | Not yet |  |
 | Clip | filter | Not yet |  |
 | Clip | opacity | Not yet |  |

@@ -38,6 +38,7 @@
         "horz",
         "HTMLAsset",
         "imageasset",
+        "incpatch",
         "ineffassign",
         "kenburns",
         "lavfi",
