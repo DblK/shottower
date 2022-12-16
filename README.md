@@ -178,12 +178,12 @@ To run the server, follow these simple steps:
 go run main.go
 ```
 
-To run the server in a docker container
+To run the server in a docker container (⚠️ Image should not fully work see [#2](https://github.com/DblK/shottower/issues/2)):
 ```
 docker build --network=host -t shottower .
 ```
 
-Once image is built use
+Once image is built use:
 ```
 docker run --rm -it shottower
 ```
