@@ -33,6 +33,9 @@ changelog:
     - title: 'Bug fixes'
       regexp: "^.*fix[(\\w)]*:+.*$"
       order: 1
+    - title: 'Chores'
+      regexp: "^.*chore[(\\w)]*:+.*$"
+      order: 2
     - title: Others
       order: 999
   sort: asc

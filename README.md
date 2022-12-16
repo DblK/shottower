@@ -137,6 +137,7 @@ Check out the `.golangci.yml` to see the specific configuration.
 To ensure, the changelog are well generated, please use prefix in your commit message as follow:
 - `feat`, `features`, `feature`: For new features
 - `fix`: For any fix
+- `chore`: For golang updates or dep updates
 - `doc`, `docs`: For any update in documentation (README, etc...)
 
 And if you `really` need to commit something that is not working `wip` ou `test` are your friends.
