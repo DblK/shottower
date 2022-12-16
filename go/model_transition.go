@@ -26,7 +26,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package openapi
 
-import "golang.org/x/exp/slices"
+import (
+	"strings"
+
+	"golang.org/x/exp/slices"
+)
 
 // Transition - In and out transitions for a clip - i.e. fade in and fade out
 type Transition struct {
@@ -50,13 +54,64 @@ func NewTransition(m map[string]interface{}) *Transition {
 	return transition
 }
 
+func (s *Transition) ConvertTransitionName(t string) string {
+	newTransition := t
+
+	// shotstack renamed transitions
+	if newTransition[0:7] == "carousel" {
+		newTransition = strings.Replace(newTransition, "carousel", "slide", 1)
+	}
+	switch newTransition {
+	case "reveal":
+		newTransition = "wipeLeft"
+	case "zoom":
+		newTransition = "zoomIn"
+	// missing ffmpeg transitions
+	case "diagBottomLeft":
+		newTransition = "diagBl"
+	case "diagBottomRight":
+		newTransition = "diagBr"
+	case "diagTopLeft":
+		newTransition = "diagTl"
+	case "diagTopRight":
+		newTransition = "diagTr"
+	case "horizontalLeftSlice":
+		newTransition = "hlSlice"
+	case "horizontalRightSlice":
+		newTransition = "hrSlice"
+	case "verticalUpSlice":
+		newTransition = "vuSlice"
+	case "verticalDownSlice":
+		newTransition = "vdSlice"
+	case "horizontalBlur":
+		newTransition = "hBlur"
+	case "wipeTopLeft":
+		newTransition = "wipeTl"
+	case "wipeTopRight":
+		newTransition = "wipeTr"
+	case "wipeBottomLeft":
+		newTransition = "wipeBl"
+	case "wipeBottomRight":
+		newTransition = "wipeBr"
+	case "squeezeVertical":
+		newTransition = "squeezeV"
+	case "squeezeHorizontal":
+		newTransition = "squeezeH"
+	}
+
+	return strings.ToLower(newTransition)
+}
+
 func (s *Transition) checkEnumValues() error {
-	values := []string{"fade", "reveal", "wipeLeft", "wipeRight", "slideLeft", "slideRight", "slideUp", "slideDown", "carouselLeft", "carouselRight", "carouselUp", "carouselDown", "shuffleTopRight", "shuffleRightTop", "shuffleRightBottom", "shuffleBottomRight", "shuffleBottomLeft", "shuffleLeftBottom", "shuffleLeftTop", "zoom"}
+	// TODO: Add unsupported "shuffleTopRight", "shuffleRightTop", "shuffleRightBottom", "shuffleBottomRight", "shuffleBottomLeft", "shuffleLeftBottom", "shuffleLeftTop"
+	values := []string{"fade", "reveal", "wipeLeft", "wipeRight", "slideLeft", "slideRight", "slideUp", "slideDown", "carouselLeft", "carouselRight", "carouselUp", "carouselDown", "zoom", "fadeBlack", "fadeWhite", "distance", "wipeUp", "wipeDown", "smoothLeft", "smoothRight", "smoothUp", "smoothDown", "circleCrop", "rectCrop", "circleClose", "circleOpen", "horzClose", "horzOpen", "vertClose", "vertOpen", "diagBottomLeft", "diagBottomRight", "diagTopLeft", "diagTopRight", "horizontalLeftSlice", "horizontalRightSlice", "verticalUpSlice", "verticalDownSlice", "dissolve", "pixelize", "radial", "horizontalBlur", "wipeTopLeft", "wipeTopRight", "wipeBottomLeft", "wipeBottomRight", "fadeGrays", "squeezeVertical", "squeezeHorizontal"}
 	valuesFast := []string{}
 	valuesSlow := []string{}
 	for _, value := range values {
-		valuesFast = append(valuesFast, value+"Fast")
-		valuesSlow = append(valuesSlow, value+"Slow")
+		if value != "zoom" {
+			valuesFast = append(valuesFast, value+"Fast")
+			valuesSlow = append(valuesSlow, value+"Slow")
+		}
 	}
 
 	if s.In != "" && !slices.Contains(values, s.In) && !slices.Contains(valuesFast, s.In) && !slices.Contains(valuesSlow, s.In) {
