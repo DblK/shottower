@@ -35,6 +35,7 @@
         "goreleaser",
         "govet",
         "greyscale",
+        "horz",
         "HTMLAsset",
         "imageasset",
         "ineffassign",
@@ -49,9 +50,11 @@
         "nakedret",
         "nilerr",
         "noctx",
+        "nolint",
         "openapi",
         "overfiller",
         "Pexels",
+        "pixelize",
         "prealloc",
         "Rémy",
         "scopelint",
@@ -79,7 +82,8 @@
         "webm",
         "wipeleft",
         "xfade",
-        "yuva"
+        "yuva",
+        "zoomin"
     ],
     "go.lintTool": "golangci-lint",
     "go.lintOnSave": "workspace"
