@@ -13,7 +13,7 @@ An open source, self-hosted implementation of the Shotstack backend server.
 
 Join our [Discord](https://discord.gg/GCXCNHRC) server for a chat.
 
-## What is ShotStack
+## 🔍 What is ShotStack
 
 ShotStack is a video editing API that allow to build dynamic Video Applications at Scale.
 
@@ -21,18 +21,19 @@ Everything in ShotStack is Open Source, except the Dashboard and the backend ser
 
 The backend server translate JSON to FFMPEG commands and serve the result.
 
-## Design goal
+## 🎯 Design goal
 
 `shottower` aims to implement a self-hosted, open source alternative to the Shotstack backend server. `shottower` has a narrower scope and are not built for heavy transcode (but pull request are welcome!).
 
 `shottower` uses terms that maps to Shotstack's API, consult the glossary for explanations.
-## Support
+
+## 🙏 Support
 
 If you like `shottower` and find it useful, there is a sponsorship and donation buttons available in the repo.
 
 If you would like to sponsor features, bugs or prioritization, reach out to one of the maintainers.
 
-## Features (Basic + Exclusive 😎)
+## 💡 Features (Basic + Exclusive 😎)
 
 * "Basic" (`Track`, `Clip`, `VideoAsset`, ...) support of Shotstack's features (See bellow for progress)
     * Use only the `stage` endpoint value until all features are implemented (See https://github.com/DblK/shottower/issues/1 for multiple endpoint handling)
@@ -45,7 +46,7 @@ If you would like to sponsor features, bugs or prioritization, reach out to one 
 * [`Planned`] Allow to use ftp file from `url` filed (`ftp://user:password@dblk.org/mypath/my_asset`)
 * [`Planned`] Add destination to Youtube
 
-### Shotstack implementation progress
+### 🏃🏻‍♂️ Shotstack implementation progress
 
 In the following matrix, there is only components than their implementation have been started.  
 At the end of the road this section should either disappear or be full of `Yes` 😇.
@@ -94,7 +95,7 @@ At the end of the road this section should either disappear or be full of `Yes` 
 | Output | destinations | Not yet |  |
 | Callback | | Yes ✅ |  |
 
-#### Endpoint implementation
+#### 𐫰 Endpoint implementation
 
 There are several endpoints that are available but not all of them are implemented.
 
@@ -112,20 +113,21 @@ There are several endpoints that are available but not all of them are implement
 | Serve    | Get Asset | Partial 🛠 | |
 | Serve    | Delete Asset | Not yet | |
 | Serve    | Get Asset by Render ID | Not yet | |
-## Running shottower
+
+## 📄 Running shottower
 
 Please have a look at the documentation under `docs/`.
 
-## Disclaimer
+## ⚠️ Disclaimer
 
 1. We have nothing to do with shotstack
 2. The purpose of ShotTower is maintaining a working, self-hosted Shotstack api compatible backend.
 
-## Contributing
+## 👨🏻‍💻 Contributing
 
 To contribute to shottower you would need the latest version of Go.
 
-### Code style
+### 🏛️ Code style
 
 To ensure we have some consistency with contributions, this project has adopted linting and style/formatting rules:
 
@@ -133,7 +135,7 @@ The **Go** code is linted with [`golangci-lint`](https://golangci-lint.run).
 
 Check out the `.golangci.yml` to see the specific configuration.
 
-### Commit message
+### ✏️ Commit message
 
 To ensure, the changelog are well generated, please use prefix in your commit message as follow:
 - `feat`, `features`, `feature`: For new features
@@ -143,7 +145,7 @@ To ensure, the changelog are well generated, please use prefix in your commit me
 
 And if you `really` need to commit something that is not working `wip` ou `test` are your friends.
 
-### Install development tools
+### 🛠️ Install development tools
 * [Go 1.19](https://go.dev/doc/install)
 * [FFMPEG (v5 or up)](https://ffmpeg.org/download.html)
 * [gifski](https://github.com/ImageOptim/gifski) (For high quality GIF)
@@ -151,7 +153,7 @@ And if you `really` need to commit something that is not working `wip` ou `test`
 * [golangci-lint](https://golangci-lint.run/usage/install/)
 * (optional) I recommend using [gow](https://github.com/mitranim/gow)
 
-### Testing and building
+### 🧪 Testing and 🧱 building
 
 To run the tests (solo execution):
 ```bash
@@ -168,7 +170,7 @@ To build the program:
 go build
 ```
 
-### Running the server
+### 💻 Running the server
 
 To run the server, follow these simple steps:
 
@@ -186,7 +188,7 @@ Once image is built use
 docker run --rm -it shottower
 ```
 
-## Contributors
+## 🤝 Contributors
 
 <table>
 <tr>
