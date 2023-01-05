@@ -744,6 +744,10 @@ func (s *FFMPEG) ToString() []string {
 		return make([]string, 0)
 	}
 
+	// Add Metadata
+	parameters = append(parameters, "-metadata")
+	parameters = append(parameters, "description='Created by ShotTower'")
+
 	// Add FPS output
 	parameters = append(parameters, "-r")
 	parameters = append(parameters, cast.ToString(s.fps))
