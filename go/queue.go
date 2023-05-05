@@ -406,7 +406,7 @@ func (s *ProcessingQueue) DownloadFile(url string) (string, error) {
 	fmt.Println("----" + file.Name())
 
 	// Get the data
-	resp, err := http.Get(url) // nolint:gosec,G107
+	resp, err := http.Get(url) // nolint:gosec
 	if err != nil {
 		return "", err
 	}
