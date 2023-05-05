@@ -29,6 +29,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/DblK/shottower/config"
 	openapi "github.com/DblK/shottower/go"
@@ -53,5 +54,14 @@ func main() {
 	QueueService := openapi.NewProcessingQueuer(myConfig)
 	QueueService.StartProcessQueue(EditAPIService)
 
-	log.Fatal(http.ListenAndServe(":4000", router))
+	server := &http.Server{
+		Handler: router,
+		Addr:    ":4000",
+
+		// Good practice to set timeouts to avoid Slowloris attacks.
+		WriteTimeout: time.Second * 60,
+		ReadTimeout:  time.Second * 15,
+		IdleTimeout:  time.Second * 60,
+	}
+	log.Fatal(server.ListenAndServe())
 }
