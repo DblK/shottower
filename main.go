@@ -36,10 +36,16 @@ import (
 )
 
 func main() {
+	// TODO: Add test to main
+	// https://dev.to/techschoolguru/load-config-from-file-environment-variables-in-golang-with-viper-2j2d
 	log.Printf("Server started")
 
-	myConfig := config.NewShottowerConfig("http://0.0.0.0:4000", config.Stage)
+	// Find config file and load it!
+	// Use config
+	config.Init("http://0.0.0.0:4000", config.Stage)
+	myConfig := config.Get()
 
+	// TODO: Replace myConfig with call to config Package
 	EditAPIService := openapi.NewEditAPIService(myConfig)
 	EditAPIController := openapi.NewEditAPIController(EditAPIService)
 
@@ -64,4 +70,6 @@ func main() {
 		IdleTimeout:  time.Second * 60,
 	}
 	log.Fatal(server.ListenAndServe())
+	// TODO: Add graceful shutdown
+	// https://github.com/miomiora/mio-init/blob/master/main.go
 }

@@ -24,6 +24,8 @@ const (
 	Stage
 )
 
+var conf *ShottowerConfig
+
 func (s EndpointType) String() string {
 	switch s {
 	case V1:
@@ -48,11 +50,25 @@ type ShottowerConfig struct {
 	endpointType EndpointType
 }
 
-func NewShottowerConfig(baseURL string, endpointType EndpointType) ShottowerConfiguration {
-	return &ShottowerConfig{
+func Init(baseURL string, endpointType EndpointType) error {
+
+	// viper.SetConfigName("config")
+
+	// https://github.com/TakasBU/TakasBU/blob/main/initializers/loadEnv.go
+	// https://github.com/laixhe/goimg/blob/c27cdb95bdf9b09f36589c2d465c7a6ebdd44b92/config/config.go
+	// https://github.com/Bikram-Gyawali/LearningGoLang/blob/17f5c3a1048f4857e31652d3a139253be68ec9a9/day24_viper/utils/config.go
+	// https://articles.wesionary.team/environment-variable-configuration-in-your-golang-project-using-viper-4e8289ef664d
+
+	conf = &ShottowerConfig{
 		rootURL:      baseURL,
 		endpointType: endpointType,
 	}
+
+	return nil
+}
+
+func Get() *ShottowerConfig {
+	return conf
 }
 
 func (s *ShottowerConfig) GetRootURL() string {

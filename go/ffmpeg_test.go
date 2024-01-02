@@ -293,4 +293,24 @@ var _ = Describe("Ffmpeg", func() {
 			Expect(res).To(Equal("subtitles='/dev/test.mkv':stream_index=0[strack0c0]; [0:v] [strack0c0] overlay [vtrack0c0];"))
 		})
 	})
+	XDescribe("CloseTrack", func() {
+		var ff openapi.FFMPEGCommand
+		BeforeEach(func() {
+			ff = openapi.NewFFMPEGCommand()
+			_ = ff.AddSource("/dev/test.mkv", false)
+		})
+
+		It("Should merge subtitle track with video", func() {
+			// var sourceClip = 0
+			var trackNumber = 0
+			// var clipNumber = 0
+			// var index = 0
+			_ = ff.AddTrack(trackNumber)
+			_ = ff.AddClip(trackNumber, "[0] concat=n=1:v=1,setpts=PTS-STARTPTS,format=yuva420p [filler1];")
+			_ = ff.AddClip(trackNumber, "[1] concat=n=1:v=1,setpts=PTS-STARTPTS,format=yuva420p [filler2];")
+			_ = ff.CloseTrack(trackNumber)
+			res := ff.ToString()
+			Expect(res).To(BeNil())
+		})
+	})
 })

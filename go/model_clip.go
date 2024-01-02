@@ -211,6 +211,14 @@ func (s *Clip) ToFFMPEG(FFMPEGCommand FFMPEGCommand, sourceClip int, trackNumber
 		effects = append(effects, FFMPEGCommand.ClipResize(sourceClip, trackNumber, currentClip, 1))
 	}
 
+	// Apply Transition between clip and transparent reference
+	if s.Transition != nil {
+		// Use the invisible source "transition" to make the effect based on the current clip and the transparent one
+		// start = invisible + clip
+		// end = clip + invisible
+		fmt.Println("here")
+	}
+
 	_ = FFMPEGCommand.AddClip(
 		trackNumber,
 		FFMPEGCommand.ClipMerge(sourceClip, trackNumber, currentClip, effects),

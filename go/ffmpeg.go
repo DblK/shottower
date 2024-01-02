@@ -642,6 +642,12 @@ func (s *FFMPEG) toStringHandleSource(parameters []string) []string {
 		parameters = append(parameters, s.GenerateFiller("pink@.0"))
 	}
 
+	// Add transparent source for transition
+	parameters = append(parameters, "-f")
+	parameters = append(parameters, "lavfi")
+	parameters = append(parameters, "-i")
+	parameters = append(parameters, s.GenerateFiller("blue@.0"))
+
 	// Add background source
 	parameters = append(parameters, "-f")
 	parameters = append(parameters, "lavfi")
@@ -689,6 +695,11 @@ func (s *FFMPEG) ToString() []string {
 				"[" + cast.ToString(maxSource+addedSources) + "] concat=n=1:v=1,setpts=PTS-STARTPTS,format=yuva420p [overfiller" + cast.ToString(i) + "];"
 		}
 	}
+
+	// Add transition stream
+	addedSources = addedSources + 1
+	filterComplex = filterComplex + "[" + cast.ToString(maxSource+addedSources) + "] concat=n=1:v=1,setpts=PTS-STARTPTS,format=yuv420p [transition0]; [transition0] trim=start=0:end=" + cast.ToString(s.duration) + " [transition];"
+
 	// Add background stream
 	addedSources = addedSources + 1
 	filterComplex = filterComplex + "[" + cast.ToString(maxSource+addedSources) + "] concat=n=1:v=1,setpts=PTS-STARTPTS,format=yuv420p [bg0]; [bg0] trim=start=0:end=" + cast.ToString(s.duration) + " [bg];"
