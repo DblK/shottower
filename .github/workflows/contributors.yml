@@ -24,7 +24,7 @@ jobs:
         run: git checkout master
       - uses: BobAnkh/add-contributors@v0.2.2
         with:
-          CONTRIBUTOR: "## Contributors"
+          CONTRIBUTOR: "## 🤝 Contributors"
           COLUMN_PER_ROW: "6"
           ACCESS_TOKEN: ${{secrets.GITHUB_TOKEN}}
           IMG_WIDTH: "100"

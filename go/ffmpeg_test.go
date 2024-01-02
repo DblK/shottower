@@ -1,6 +1,6 @@
 /*
 shottower
-Copyright (C) 2022 Rémy Boulanouar
+Copyright (C) 2022-2023 Rémy Boulanouar
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -274,6 +274,43 @@ var _ = Describe("Ffmpeg", func() {
 
 			res := ff.ClipAudioMerge(sourceClip, trackNumber, clipNumber, effects)
 			Expect(res).To(Equal("[1:a] atrim=start=5:end=9.96, asetpts=PTS-STARTPTS [atrack0c1p0];[atrack0c1p0] volume=0.5 [atrack0c1p1];[filler] [atrack0c1p1] amix=inputs=2 [atrack0c1];"))
+		})
+	})
+	Describe("ClipSubtitleBurn", func() {
+		var ff openapi.FFMPEGCommand
+		BeforeEach(func() {
+			ff = openapi.NewFFMPEGCommand()
+			_ = ff.AddSource("/dev/test.mkv", false)
+		})
+
+		It("Should merge subtitle track with video", func() {
+			var sourceClip = 0
+			var trackNumber = 0
+			var clipNumber = 0
+			var index = 0
+
+			res := ff.ClipSubtitleBurn(sourceClip, trackNumber, clipNumber, index)
+			Expect(res).To(Equal("subtitles='/dev/test.mkv':stream_index=0[strack0c0]; [0:v] [strack0c0] overlay [vtrack0c0];"))
+		})
+	})
+	XDescribe("CloseTrack", func() {
+		var ff openapi.FFMPEGCommand
+		BeforeEach(func() {
+			ff = openapi.NewFFMPEGCommand()
+			_ = ff.AddSource("/dev/test.mkv", false)
+		})
+
+		It("Should merge subtitle track with video", func() {
+			// var sourceClip = 0
+			var trackNumber = 0
+			// var clipNumber = 0
+			// var index = 0
+			_ = ff.AddTrack(trackNumber)
+			_ = ff.AddClip(trackNumber, "[0] concat=n=1:v=1,setpts=PTS-STARTPTS,format=yuva420p [filler1];")
+			_ = ff.AddClip(trackNumber, "[1] concat=n=1:v=1,setpts=PTS-STARTPTS,format=yuva420p [filler2];")
+			_ = ff.CloseTrack(trackNumber)
+			res := ff.ToString()
+			Expect(res).To(BeNil())
 		})
 	})
 })

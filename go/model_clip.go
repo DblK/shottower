@@ -1,6 +1,6 @@
 /*
 shottower
-Copyright (C) 2022 Rémy Boulanouar
+Copyright (C) 2022-2023 Rémy Boulanouar
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -209,6 +209,14 @@ func (s *Clip) ToFFMPEG(FFMPEGCommand FFMPEGCommand, sourceClip int, trackNumber
 		effects = append(effects, FFMPEGCommand.ClipFillerOverlay(sourceClip, trackNumber, currentClip, s.Position))
 	} else {
 		effects = append(effects, FFMPEGCommand.ClipResize(sourceClip, trackNumber, currentClip, 1))
+	}
+
+	// Apply Transition between clip and transparent reference
+	if s.Transition != nil {
+		// Use the invisible source "transition" to make the effect based on the current clip and the transparent one
+		// start = invisible + clip
+		// end = clip + invisible
+		fmt.Println("here")
 	}
 
 	_ = FFMPEGCommand.AddClip(

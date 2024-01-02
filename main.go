@@ -1,6 +1,6 @@
 /*
 shottower
-Copyright (C) 2022 Rémy Boulanouar
+Copyright (C) 2022-2023 Rémy Boulanouar
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -29,16 +29,23 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/DblK/shottower/config"
 	openapi "github.com/DblK/shottower/go"
 )
 
 func main() {
+	// TODO: Add test to main
+	// https://dev.to/techschoolguru/load-config-from-file-environment-variables-in-golang-with-viper-2j2d
 	log.Printf("Server started")
 
-	myConfig := config.NewShottowerConfig("http://0.0.0.0:4000", config.Stage)
+	// Find config file and load it!
+	// Use config
+	config.Init("http://0.0.0.0:4000", config.Stage)
+	myConfig := config.Get()
 
+	// TODO: Replace myConfig with call to config Package
 	EditAPIService := openapi.NewEditAPIService(myConfig)
 	EditAPIController := openapi.NewEditAPIController(EditAPIService)
 
@@ -53,5 +60,16 @@ func main() {
 	QueueService := openapi.NewProcessingQueuer(myConfig)
 	QueueService.StartProcessQueue(EditAPIService)
 
-	log.Fatal(http.ListenAndServe(":4000", router))
+	server := &http.Server{
+		Handler: router,
+		Addr:    ":4000",
+
+		// Good practice to set timeouts to avoid Slowloris attacks.
+		WriteTimeout: time.Second * 60,
+		ReadTimeout:  time.Second * 15,
+		IdleTimeout:  time.Second * 60,
+	}
+	log.Fatal(server.ListenAndServe())
+	// TODO: Add graceful shutdown
+	// https://github.com/miomiora/mio-init/blob/master/main.go
 }

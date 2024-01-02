@@ -16,14 +16,14 @@ jobs:
     steps:
       - uses: actions/setup-go@v3
         with:
-          go-version: 1.18
+          go-version: 1.19
       - uses: actions/checkout@v3
         with:
           fetch-depth: 2
 
       - name: Get changed files
         id: changed-files
-        uses: tj-actions/changed-files@v14.1
+        uses: tj-actions/changed-files@v35.9.2
         with:
           files: |
             go.*
@@ -31,6 +31,6 @@ jobs:
 
       - name: golangci-lint
         if: steps.changed-files.outputs.any_changed == 'true'
-        uses: golangci/golangci-lint-action@v3.2.0
+        uses: golangci/golangci-lint-action@v3.4.0
         with:
-          version: v1.48.0
+          version: v1.52.2
